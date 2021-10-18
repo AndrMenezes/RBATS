@@ -18,13 +18,13 @@ from GitHub using:
 
 ``` r
 # install.packages("remotes")
-remotes::install.packages("AndrMenezes/RBATS")
+remotes::install_github("AndrMenezes/RBATS", build_vignettes = TRUE)
 ```
 
 ## Quick overview
 
 The package is structured based on S3 classes objects. The following
-functions create objects for
+functions created the two main objects of the package:
 
 -   `dlm`: create and object of class `dlm` for Dynamic Linear Models.
 
@@ -47,13 +47,19 @@ Each of this class objects have the following methods:
 -   `logLik`: return the predictive log-likelihood for `dlm.fit` and
     `dgegm.fit` objects.
 
+Two vignettes showing the package functionality can be accessed through:
+
+``` r
+utils::browseVignettes(package = "RBATS")
+```
+
 ## Contribute
 
 The `RBATS` is still an experimental `R` package. I am inspired in the
-great `PyBATS` python package from [Isaac
-Lavine](https://www.linkedin.com/in/isaac-lavine-70495929/) and [Andrew
-Cron](https://www.linkedin.com/in/andrewjcron/). I hope in future
-`RBATS` became a robust tool as well as `PyBATS`.
+great [`PyBATS`](https://lavinei.github.io/pybats/) python package from
+[Isaac Lavine](https://www.linkedin.com/in/isaac-lavine-70495929/) and
+[Andrew Cron](https://www.linkedin.com/in/andrewjcron/). I hope in
+future `RBATS` became a robust tool as well as `PyBATS`.
 
 Please, any suggestions and contributions are more than welcome. Feel
 free to open issues, pull requests and/or forks. Thanks!

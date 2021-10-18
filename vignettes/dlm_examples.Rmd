@@ -1,0 +1,230 @@
+---
+title: "Dynamic Linear Models: Examples"
+output: 
+  rmarkdown::html_vignette:
+    toc: True
+author: "André F. B. Menezes"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+vignette: >
+  %\VignetteIndexEntry{Dynamic Linear Models: Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = "center",
+  fig.width = 10,
+  fig.height = 6)
+```
+
+```{r setup, message=FALSE}
+library(RBATS)
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+theme_set(
+  theme_cowplot(font_size = 16, font_family = "Palatino") +
+    background_grid()
+)
+```
+
+## Flow of the River Nile
+
+```{r nile-plot-data, include=FALSE}
+plot(Nile)
+```
+
+```{r nile-define-fit-model}
+(model_object <- dlm(polynomial_order = 2, discount_factors = list(polynomial = 0.95)))
+(fitted_model <- fit(model_object, y = c(Nile)))
+names(fitted_model)
+```
+
+```{r nile-autoplot}
+autoplot(fitted_model, type = "filter", what = "predictive")
+autoplot(fitted_model, type = "smooth", what = "posterior")
+```
+
+```{r nile-plot-level, echo=FALSE}
+df_level <- fitted_model$data_posterior_filter %>% 
+  filter(parameter == "level") %>% 
+  mutate(y = c(Nile)) %>% 
+  bind_rows(
+    fitted_model$data_posterior_smooth %>% 
+      filter(parameter == "level") %>% 
+      mutate(y = c(Nile))
+  )
+
+ggplot(df_level, aes(x = t, y = y)) +
+  geom_point(size = 3) +
+  geom_line(linetype = "dashed") +
+  geom_line(aes(y = mean, col = type), size = 1)
+```
+
+```{r nile-forecast}
+forecast(fitted_model, horizon = 5)
+```
+
+
+## Monthly Airline Passenger Numbers
+
+```{r air-passengers-plot-data, include=FALSE}
+plot(AirPassengers)
+```
+
+```{r air-passengers-define-fit-model}
+(model_object <- dlm(polynomial_order = 2,
+                     seasonal = list(type = "free", period = 12),
+                     discount_factors = list(polynomial = c(0.90, 0.95), seasonal = 0.98)))
+(fitted_model <- fit(model_object, y = c(AirPassengers), prior_length = 13))
+logLik(fitted_model)
+```
+
+```{r air-passengers-autoplot-fit}
+autoplot(fitted_model, type = "filter", what = "predictive")
+autoplot(fitted_model, type = "smooth", what = "posterior")
+```
+
+```{r air-passengers-plot-level, echo=FALSE}
+df_level <- fitted_model$data_posterior_filter %>% 
+  filter(parameter == "level") %>% 
+  mutate(y = c(AirPassengers)) %>% 
+  bind_rows(
+    fitted_model$data_posterior_smooth %>% 
+      filter(parameter == "level") %>% 
+      mutate(y = c(AirPassengers))
+  )
+
+ggplot(df_level, aes(x = t, y = y)) +
+  geom_line() +
+  geom_line(aes(y = mean, col = type), size = 1)
+```
+
+```{r air-passengers-forecast}
+forecast(fitted_model, horizon = 12)
+```
+
+
+
+## US monthly retail employment
+
+```{r us-retail-employment-plot-data, include=FALSE}
+data(us_retail_employment, package = "RBATS")
+head(us_retail_employment)
+ggplot(us_retail_employment, aes(x = time, y = employed)) +
+  geom_line() +
+  scale_x_date(breaks = scales::pretty_breaks(8), date_labels = "%b/%Y")
+```
+
+```{r us-retail-employment-define-fit-model}
+(model_object <- dlm(polynomial_order = 2,
+                     seasonal = list(type = "fourier", period = 12, harmonics = 1:3),
+                     discount_factors = list(polynomial = c(0.90, 0.95), seasonal = 0.98)))
+(fitted_model <- fit(model_object, y = us_retail_employment$employed, prior_length = 13,
+                     level = 0.05))
+logLik(fitted_model)
+```
+
+
+```{r us-retail-employment-autoplot-fit}
+autoplot(fitted_model, type = "filter", what = "predictive")
+autoplot(fitted_model, type = "smooth", what = "posterior")
+```
+
+```{r us-retail-employment-plot-level, echo=FALSE}
+df_level <- fitted_model$data_posterior_filter %>% 
+  filter(parameter == "level") %>% 
+  mutate(time = us_retail_employment$time,
+         y = us_retail_employment$employed) %>% 
+  bind_rows(
+    fitted_model$data_posterior_smooth %>% 
+      filter(parameter == "level") %>% 
+      mutate(time = us_retail_employment$time,
+             y = us_retail_employment$employed)
+  )
+
+ggplot(df_level, aes(x = time, y = y)) +
+  geom_line() +
+  geom_line(aes(y = mean, col = type), size = 1) +
+  scale_x_date(breaks = scales::pretty_breaks(8), date_labels = "%b/%Y")
+```
+
+```{r us-retail-employment-forecast}
+forecast(fitted_model, horizon = 12)
+```
+
+
+## Daily electricity demand
+
+
+```{r vic-electricity-daily-plot-data}
+data(vic_electricity_daily, package = "RBATS")
+head(vic_electricity_daily)
+ggplot(vic_electricity_daily, aes(x = time, y = demand)) +
+  geom_line() +
+  scale_x_date(breaks = scales::pretty_breaks(10), date_labels = "%b/%y")
+```
+
+```{r vic-electricity-daily-define-fit-model}
+X <- model.matrix(~ max_temperature + day_type, data = vic_electricity_daily)
+X <- X[, -1, drop = FALSE]
+X[, 1] <- X[, 1] - mean(X[, 1])
+head(X)
+unique(vic_electricity_daily$day_type)
+(model_object <- dlm(polynomial_order = 2,
+                     xreg = X,
+                     seasonal = list(type = "fourier", period = 7, harmonics = 1:3),
+                     discount_factors = list(polynomial = 0.95, seasonal = 0.997,
+                                             regressors = 0.999)))
+model_object$D
+(fitted_model <- fit(model_object, y = vic_electricity_daily$demand, prior_length = 21,
+                     level = 0.10))
+logLik(fitted_model)
+```
+
+```{r vic-electricity-daily-autoplot-fit}
+autoplot(fitted_model, type = "filter", what = "predictive", interval = FALSE)
+autoplot(fitted_model, type = "smooth", what = "posterior")
+```
+
+
+```{r vic-electricity-daily-plot-level, include=FALSE}
+df_level_filter <- fitted_model$data_posterior_filter %>% 
+  filter(parameter %in% c("level", "max_temperature", "day_typeweekday", "day_typeweekend")) %>%
+  mutate(parameter = paste0("parm__", parameter)) %>% 
+  select(t, type, parameter, mean) %>% 
+  tidyr::pivot_wider(names_from = parameter, values_from = mean) %>% 
+  mutate(time = vic_electricity_daily$time,
+         demand = vic_electricity_daily$demand,
+         max_temperature = X[, 1],
+         day_typeweekday = X[, 2],
+         day_typeweekend = X[, 3]) %>% 
+  mutate(level = parm__level + parm__max_temperature * max_temperature +
+           parm__day_typeweekday * day_typeweekday + 
+           parm__day_typeweekend * day_typeweekend)
+
+df_level_smooth <- fitted_model$data_posterior_smooth %>% 
+  filter(parameter %in% c("level", "max_temperature", "day_typeweekday", "day_typeweekend")) %>%
+  mutate(parameter = paste0("parm__", parameter)) %>% 
+  select(t, type, parameter, mean) %>% 
+  tidyr::pivot_wider(names_from = parameter, values_from = mean) %>% 
+  mutate(time = vic_electricity_daily$time,
+         demand = vic_electricity_daily$demand,
+         max_temperature = X[, 1],
+         day_typeweekday = X[, 2],
+         day_typeweekend = X[, 3]) %>% 
+  mutate(level = parm__level + parm__max_temperature * max_temperature +
+           parm__day_typeweekday * day_typeweekday + 
+           parm__day_typeweekend * day_typeweekend)
+
+df_level <- bind_rows(df_level_filter, df_level_smooth)
+
+ggplot(df_level, aes(x = time, y = demand)) +
+  geom_line() +
+  geom_line(aes(y = level, col = type), size = 1) +
+  scale_x_date(breaks = scales::pretty_breaks(8), date_labels = "%b/%Y")
+```
+

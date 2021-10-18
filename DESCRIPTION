@@ -1,0 +1,19 @@
+Package: RBATS
+Title: Bayesian Dynamic Models
+Version: 0.1.0
+Author: André F. B. Menezes
+Maintainer: André F. B. Menezes <andrefelipemaringa@gmail.com>
+Description: Tools to work with Bayesian Dynamic Models based on the West and Harrison (1997) paradigm.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports: stats, ggplot2
+Suggests: 
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0)
+Depends: 
+    R (>= 2.10)
+VignetteBuilder: knitr

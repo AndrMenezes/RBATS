@@ -6,14 +6,18 @@
 \alias{define_prior.dgegm}
 \title{Define prior moments for the state parameters.}
 \usage{
-define_prior(object)
+define_prior(object, ...)
 
-\method{define_prior}{dlm}(object)
+\method{define_prior}{dlm}(object, y, ...)
 
-\method{define_prior}{dgegm}(object)
+\method{define_prior}{dgegm}(object, y, ...)
 }
 \arguments{
 \item{object}{an object of class \code{dlm} or \code{dgegm}.}
+
+\item{...}{currently not used.}
+
+\item{y}{numeric. prior first observations use to compute the prior moments.}
 }
 \description{
 Helper functions applied on objects of class \code{dlm} and \code{dgegm},

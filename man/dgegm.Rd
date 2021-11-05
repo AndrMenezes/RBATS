@@ -8,10 +8,7 @@ dgegm(
   lambda = 1,
   discount_factors,
   df_variance = 1,
-  variance_law = list(type = "identity", p = 2),
-  prior = NULL,
-  n = 1,
-  s = 1
+  variance_law = list(type = "identity", p = 2)
 )
 }
 \arguments{
@@ -27,11 +24,6 @@ and \eqn{\lambda=0} the Gompertz curve.}
 \item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
 The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
-
-\item{prior}{list. If specified it should contains prior for state parameters.}
-
-\item{n, s}{numeric. Prior sample size and mean for the variance, respectively.
-For both parameter the default is 1.}
 }
 \description{
 Create object of class \code{dgegm}.
@@ -41,7 +33,7 @@ West, M.; Harrison, J. Bayesian Forecasting and Dynamic Models. Springer, 1997.
 
 Migon, H. M. and Gamerman, D. (1993). Generalized exponential growth models: A Bayesian approach,  \emph{Journal of Forecasting}, \bold{12}, 573--584
 
-Gamerman, D. and Migon, H. S. (1991). Forecasting the number of AIDS cases in Brasil,  \emph{The Statistician}, \bold{40}, 427--442.
+Gamerman, D. and Migon, H. S. (1991). Forecasting the number of AIDS cases in Brazil,  \emph{The Statistician}, \bold{40}, 427--442.
 }
 \author{
 André F. B. Menezes

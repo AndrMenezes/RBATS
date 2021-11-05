@@ -6,16 +6,20 @@
 \alias{update_moments.dgegm}
 \title{Update the moments of state parameters}
 \usage{
-update_moments(object, time)
+update_moments(object, ...)
 
-\method{update_moments}{dlm}(object, time)
+\method{update_moments}{dlm}(object, y, X = NULL, ...)
 
-\method{update_moments}{dgegm}(object, time)
+\method{update_moments}{dgegm}(object, y, ...)
 }
 \arguments{
 \item{object}{an object of \code{dlm} or \code{dgegm}.}
 
-\item{time}{integer. The time index to update the moments.}
+\item{...}{currently not used.}
+
+\item{y}{vector. Observed value of time series.}
+
+\item{X}{matrix. Regressors.}
 }
 \description{
 Methods to update the moments of state parameters and compute the

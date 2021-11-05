@@ -28,6 +28,23 @@ print.dlm <- function(x, ...) {
   cat("\n")
   var_law <- if (x$variance_law$type == "power") paste0("power with p = ", x$variance_law$power) else x$variance_law$type
   cat("Variance law:", var_law, "\n")
+
+  if (!is.null(x[["prior"]])) {
+    cat("\nPosterior parameters at time ", x[["time"]], ":\n", sep = "")
+    tab_filter <- data.frame(parameter = x[["parameters_names"]],
+                             mean = x[["posterior"]][["m"]],
+                             variance = diag(x[["posterior"]][["C"]]), row.names = NULL)
+    print(tab_filter)
+    cat("\n")
+    cat("Predictive log-likelihod: ", logLik(x)[1L], "\n", sep = "")
+  }
+  invisible()
+}
+
+#' @rdname s3methods
+#' @export
+print.dlm.fit <- function(x, ...) {
+  print(x$model)
 }
 
 #' @rdname s3methods
@@ -49,49 +66,24 @@ print.dgegm <- function(x, ...) {
   cat("\n")
   var_law <- if (x$variance_law$type == "power") paste0("power with p = ", x$variance_law$power) else x$variance_law$type
   cat("Variance law:", var_law, "\n")
+
+  if (!is.null(x[["prior"]])) {
+    cat("\nPosterior parameters at time ", x[["time"]], ":\n", sep = "")
+    tab_filter <- data.frame(parameter = x[["parameters_names"]],
+                             mean = x[["posterior"]][["m"]],
+                             variance = diag(x[["posterior"]][["C"]]), row.names = NULL)
+    print(tab_filter)
+    cat("\n")
+    cat("Predictive log-likelihod: ", logLik(x)[1L], "\n", sep = "")
+  }
+  invisible()
 }
 
-#' @rdname s3methods
-#' @export
-print.dlm.fit <- function(x, ...) {
-
-  cat("\nFit from Bayesian Dynamic Linear Model \n\n", sep = "")
-
-  cat(paste0("Call:\n", paste(deparse(x$call, width.cutoff = 80L), collapse = "\n")),
-      "\n\n")
-
-  cat("The model used the first", x[["prior_length"]],
-      "observations to construct the prior parameters\n\n")
-
-  last_index <- length(x[["y"]])
-  cat("Filtering parameters at time ", last_index, ":\n", sep = "")
-  last_posterior <- x[["posterior"]][[last_index]]
-  tab_filter <- data.frame(parameter = names(last_posterior[["m"]]),
-                           mean = last_posterior[["m"]],
-                           variance = diag(last_posterior[["C"]]), row.names = NULL)
-  print(tab_filter)
-  cat("\n")
-  cat("Predictive log-likelihod: ", logLik(x)[1L], "\n", sep = "")
-}
 
 #' @rdname s3methods
 #' @export
 print.dgegm.fit <- function(x, ...) {
-
-  cat("\nFit from Bayesian Dynamic Generalized Exponential Growth Model \n\n", sep = "")
-
-  cat(paste0("Call:\n", paste(deparse(x$call, width.cutoff = 80L), collapse = "\n")),
-      "\n\n")
-
-  last_index <- length(x[["y"]])
-  cat("Filtering parameters at time ", last_index, ":\n", sep = "")
-  last_posterior <- x[["posterior"]][[last_index]]
-  tab_filter <- data.frame(parameter = names(last_posterior[["m"]]),
-                           mean = last_posterior[["m"]],
-                           variance = diag(last_posterior[["C"]]), row.names = NULL)
-  print(tab_filter)
-  cat("\n")
-  cat("Predictive log-likelihod: ", logLik(x)[1L], "\n", sep = "")
+  print(x$model)
 }
 
 #' @rdname s3methods
@@ -110,12 +102,30 @@ print.dlm.forecast <- function(x, ...) {
 
 #' @rdname s3methods
 #' @export
+logLik.dlm <- function(object, ...) {
+  if (!missing(...))
+    warning("Extra arguments discarded")
+  ll <- object$loglik
+  attr(ll, "df") <- length(object$parameters_names)
+  attr(ll, "nobs") <- object$time
+  class(ll) <- "logLik"
+  ll
+}
+
+#' @rdname s3methods
+#' @export
 logLik.dlm.fit <- function(object, ...) {
-  mu <- sapply(object[["predictive"]], function(z) z[["f"]])
-  sigma <- sqrt(sapply(object[["predictive"]], function(z) z[["q"]]))
-  df <- sapply(object[["predictive"]], function(z) z[["n"]])
-  ll <- sum(log(1/sigma * dt((object[["y"]] - mu)/sigma, df)), na.rm = TRUE)
-  attr(ll, "nobs") <- length(mu)
+  logLik(object[["model"]])
+}
+
+#' @rdname s3methods
+#' @export
+logLik.dgegm <- function(object, ...) {
+  if (!missing(...))
+    warning("Extra arguments discarded")
+  ll <- object$loglik
+  attr(ll, "df") <- length(object$parameters_names)
+  attr(ll, "nobs") <- object$time
   class(ll) <- "logLik"
   ll
 }
@@ -123,11 +133,5 @@ logLik.dlm.fit <- function(object, ...) {
 #' @rdname s3methods
 #' @export
 logLik.dgegm.fit <- function(object, ...) {
-  mu <- sapply(object[["predictive"]], function(z) z[["f"]])
-  sigma <- sqrt(sapply(object[["predictive"]], function(z) z[["q"]]))
-  df <- sapply(object[["predictive"]], function(z) z[["n"]])
-  ll <- sum(log(1/sigma * dt((object[["y"]] - mu)/sigma, df)), na.rm = TRUE)
-  attr(ll, "nobs") <- length(mu)
-  class(ll) <- "logLik"
-  ll
+  logLik(object[["model"]])
 }

@@ -2,35 +2,41 @@
 % Please edit documentation in R/forecast.R
 \name{forecast}
 \alias{forecast}
-\alias{forecast.dlm.fit}
-\alias{forecast_marginal.dlm.fit}
-\alias{forecast_aR.dlm.fit}
+\alias{forecast_marginal}
+\alias{forecast_aR}
+\alias{forecast.dlm}
+\alias{forecast_marginal.dlm}
+\alias{forecast_aR.dlm}
 \title{Forecast Bayesian Dynamic Linear Models.}
 \usage{
-forecast(object, ...)
+forecast(object, horizon, ...)
 
-\method{forecast}{dlm.fit}(
+forecast_marginal(object, horizon, ...)
+
+forecast_aR(object, horizon, ...)
+
+\method{forecast}{dlm}(
   object,
-  xreg = NULL,
   horizon,
+  xreg = NULL,
   interval = TRUE,
   level = 0.1,
   state_parameters = FALSE,
   ...
 )
 
-forecast_marginal.dlm.fit(object, xreg = NULL, horizon)
+\method{forecast_marginal}{dlm}(object, horizon, xreg = NULL, ...)
 
-forecast_aR.dlm.fit(object, horizon)
+\method{forecast_aR}{dlm}(object, horizon, ...)
 }
 \arguments{
 \item{object}{fitted model object of class \code{dlm.fit}.}
 
+\item{horizon}{integer. Forecast horizon.}
+
 \item{...}{currently not used.}
 
 \item{xreg}{matrix. Future values of possible regressors.}
-
-\item{horizon}{integer. Forecast horizon.}
 
 \item{interval}{logical. Should exact credible interval be returned?}
 
@@ -45,6 +51,8 @@ to perform marginal forecast of predictive and/or state distributions.
 }
 \references{
 West, M.; Harrison, J. Bayesian Forecasting and Dynamic Models. Springer, 1997.
+
+Migon, H. M. and Gamerman, D. (1993). Generalized exponential growth models: A Bayesian approach,  \emph{Journal of Forecasting}, \bold{12}, 573--584
 }
 \author{
 André F. B. Menezes

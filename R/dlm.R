@@ -10,9 +10,6 @@
 #' @param variance_law list. Variance law \code{type} and \code{power} parameter.
 #' The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 #' and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.
-#' @param prior list. If specified it should contains prior for state parameters.
-#' @param n,s numeric. Prior sample size and mean for the variance, respectively.
-#' For both parameter the default is 1.
 #'
 #' @author André F. B. Menezes
 #'
@@ -28,8 +25,7 @@ dlm <- function(polynomial_order = 1L,
                 discount_factors = list(polynomial = 0.95, seasonal = 0.98,
                                         regressors = 0.99),
                 df_variance = 1,
-                variance_law = list(type = "identity", power = 2),
-                prior = NULL, n = 1, s = 1) {
+                variance_law = list(type = "identity", power = 2)) {
 
   if (polynomial_order < 1L) {
     polynomial_order <- 1L
@@ -76,20 +72,14 @@ dlm <- function(polynomial_order = 1L,
   mod[["df_variance"]] <- df_variance
   mod[["variance_law"]] <- variance_law
 
-  # Prior
-  if (is.null(prior)) {
-    prior[[1L]][["a"]] <- NULL
-    prior[[1L]][["R"]] <- NULL
-    prior[[1L]][["n"]] <- n
-    prior[[1L]][["s"]] <- n
-  }
-
-  mod[["prior"]] <- prior
   # Additional information
   mod[["polynomial_order"]] <- polynomial_order
   seasonal[["type"]] <- seas_type
   mod[["seasonal"]] <- seasonal
   mod[["parameters_names"]] <- comp_names
+  mod[["loglik"]] <- 0
+  mod[["time"]] <- 0L
   mod[["call"]] <- match.call()
+
   structure(mod, class = "dlm")
 }

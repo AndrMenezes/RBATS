@@ -1,5 +1,4 @@
 test_that("filter and smooth functions for growth model for Nile data works", {
-
   y <- c(Nile)
   # Define the model
   model_object <- dlm(
@@ -8,11 +7,10 @@ test_that("filter and smooth functions for growth model for Nile data works", {
   )
 
   # Fitting the model
-  fitted_object <- fit(object = model_object,  y = y, prior_length = 10)
+  fitted_object <- fit(object = model_object, y = y, prior_length = 10)
 
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
-
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 })
 
 test_that("filter and smooth functions with missing value for Nile data works", {
@@ -27,9 +25,26 @@ test_that("filter and smooth functions with missing value for Nile data works", 
   # Fitting the model
   fitted_object <- fit(object = model_object,  y = y, prior_length = 10)
 
-  # x11(); autoplot(fitted_object, what = "predictive")
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
+})
+
+test_that("filter and smooth functions with missing value and specifying prior for Nile data works", {
+  y <- c(Nile)
+  y[c(10, 30)] <- NA_real_
+  # Define the model
+  model_object <- dlm(
+    polynomial_order = 2,
+    discount_factors = list(polynomial = c(0.90, 0.95))
+  )
+
+  # Fitting the model
+  a0 <- c(1120, 0)
+  R0 <- diag(100, 2)
+  fitted_object <- fit(object = model_object, y = y, a0 = a0, R0 = R0)
+
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 })
 
 
@@ -43,8 +58,8 @@ test_that("filter and smooth for seasonal growth model for AirPassengers data wo
     discount_factors = list(polynomial = c(0.90), seasonal = 0.98)
   )
   fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 
   # Seasonal free
   model_object <- dlm(
@@ -53,9 +68,9 @@ test_that("filter and smooth for seasonal growth model for AirPassengers data wo
     discount_factors = list(polynomial = 0.90, seasonal = 0.98)
   )
   fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
 
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 })
 
 test_that("filter and smooth for seasonal growth model for us_retail_employment data works", {
@@ -68,8 +83,8 @@ test_that("filter and smooth for seasonal growth model for us_retail_employment 
     discount_factors = list(polynomial = 0.90, seasonal = 0.98)
   )
   fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 
   model_object <- dlm(
     polynomial_order = 2,
@@ -77,8 +92,8 @@ test_that("filter and smooth for seasonal growth model for us_retail_employment 
     discount_factors = list(polynomial = 0.90, seasonal = 0.98)
   )
   fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 
 })
 
@@ -93,12 +108,13 @@ test_that("filter and smooth functions for regression model for Nile data works"
   )
 
   # Fitting the model
-  fitted_object <- fit(object = model_object,  y = y, prior_length = 10)
-  expect_true(fitted_object[["filtered_parameters"]])
-  expect_true(fitted_object[["smooth_parameters"]])
+  fitted_object <- fit(object = model_object, y = y, prior_length = 10)
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
 })
 
 test_that("fit method for dgegm object for simulated data works", {
+
   set.seed(6669)
   n <- 60
   theta_1 <- 50
@@ -111,8 +127,7 @@ test_that("fit method for dgegm object for simulated data works", {
   lambdas <- c(-1, -1/2, 0, 1/2, 1)
   out <- lapply(lambdas, function(l) {
     # Define the model
-    model_object <- dgegm(lambda = -1, discount_factors = c(0.90, 0.90, 0.95),
-                          variance_law = list(type = "power", p = 2))
+    model_object <- dgegm(lambda = l, discount_factors = c(0.95, 0.95, 0.998))
     # Fitting the model
     fit(object = model_object, y = y)
   })

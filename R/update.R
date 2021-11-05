@@ -5,7 +5,9 @@
 #' \code{dgegm}.
 #'
 #' @param object an object of \code{dlm} or \code{dgegm}.
-#' @param time integer. The time index to update the moments.
+#' @param y vector. Observed value of time series.
+#' @param X matrix. Regressors.
+#' @param ... currently not used.
 #'
 #' @author André F. B. Menezes
 #'
@@ -16,37 +18,34 @@
 
 #' @rdname update_moments
 #' @export
-update_moments <- function(object, time){
+update_moments <- function(object, ...){
   UseMethod("update_moments", object)
 }
 
 #' @rdname update_moments
 #' @export
-update_moments.dlm <- function(object, time) {
+update_moments.dlm <- function(object, y, X = NULL, ...) {
 
   # Model components
   FF <- object[["FF"]]
   GG <- object[["GG"]]
   D <- object[["D"]]
   df_variance <- object[["df_variance"]]
+  parameters_names <- object[["parameters_names"]]
+
+  # Update time index
+  object$time <- object[["time"]] + 1L
 
   # Get the observation time series and possible covariates
-  y <- object[["y"]][time]
-  if (!is.null(object[["xreg"]]))
-    FF <- rbind(FF, t(object[["xreg"]][time, , drop = FALSE]))
+  if (!is.null(X))
+    FF <- rbind(FF, t(X))
 
   # Prior at t
-  a0 <- object[["prior"]][[time]][["a"]]
-  R0 <- object[["prior"]][[time]][["R"]]
+  a0 <- object[["prior"]][["a"]]
+  R0 <- object[["prior"]][["R"]]
   # Prior for the observational variance
-  n0 <- object[["prior"]][[time]][["n"]]
-  s0 <- object[["prior"]][[time]][["s"]]
-
-  # One-step ahead predictive distribution
-  f <- drop(crossprod(FF, a0))
-  k <- .variance_law(type = object[["variance_law"]][["type"]], mu = f,
-                     p = object[["variance_law"]][["power"]])
-  q <- s0 * k + drop(crossprod(FF, R0 %*% FF))
+  n0 <- object[["prior"]][["n"]]
+  s0 <- object[["prior"]][["s"]]
 
   # If data is missing then skip the Kalman updating, posterior = prior
   if (is.na(y)) {
@@ -54,7 +53,15 @@ update_moments.dlm <- function(object, time) {
     C <- R0
     n <- n0
     s <- s0
+    lpl <- 0
   } else {
+
+    # One-step ahead predictive distribution
+    f <- drop(crossprod(FF, a0))
+    k <- .variance_law(type = object[["variance_law"]][["type"]], mu = f,
+                       p = object[["variance_law"]][["power"]])
+    q <- s0 * k + drop(crossprod(FF, R0 %*% FF))
+
     # Update the posterior parameters:
     e <- y - f
 
@@ -69,6 +76,9 @@ update_moments.dlm <- function(object, time) {
     s <- r * s0
     m <- drop(a0 + A %*% e)
     C <- r * (R0 - q * tcrossprod(A, A))
+
+    # Log-predictive likelihood
+    lpl <- log(1/sqrt(q) * dt((y - f)/sqrt(q), n0))
   }
   # Get priors a, R for time t + 1 from the posteriors m, C
   P <- tcrossprod(GG %*% C, GG)
@@ -78,18 +88,25 @@ update_moments.dlm <- function(object, time) {
   R <- D * P
   n <- df_variance * n
 
-  colnames(R) <- rownames(R) <- colnames(C)
-  names(a) <- names(m)
+  # Set name
+  colnames(R) <- rownames(R) <- colnames(C) <- parameters_names
+  names(a) <- names(m) <- parameters_names
 
-  list(posterior = list(m = m, C = C, n = n, s = s),
-       predictive = list(f = f, q = q, n = n0, s = s0),
-       prior = list(a = a, R = R, W = R - P, n = n, s = s))
+  # Save posterior
+  object[["posterior"]] <- list(m = m, C = C, n = n, s = s)
 
+  # Update the prior to t + 1
+  object[["prior"]] <- list(a = a, R = R, W = R - P, n = n, s = s)
+
+  # Update the log-predictive likelihood
+  object[["loglik"]] <- object[["loglik"]] + lpl
+
+  object
 }
 
 #' @rdname update_moments
 #' @export
-update_moments.dgegm <- function(object, time) {
+update_moments.dgegm <- function(object, y, ...) {
 
   parms_names <- object[["parameters_names"]]
   # Model components
@@ -101,38 +118,46 @@ update_moments.dgegm <- function(object, time) {
   df_variance <- object[["df_variance"]]
   variance_law <- object[["variance_law"]]
   lambda <- object[["lambda"]]
-  # Observed value at time t
-  y <- object[["y"]][time]
 
   # Prior at t
-  a0 <- object[["prior"]][[time]][["a"]]
-  R0 <- object[["prior"]][[time]][["R"]]
-  n0 <- object[["prior"]][[time]][["n"]]
-  s0 <- object[["prior"]][[time]][["s"]]
+  a0 <- object[["prior"]][["a"]]
+  R0 <- object[["prior"]][["R"]]
+  n0 <- object[["prior"]][["n"]]
+  s0 <- object[["prior"]][["s"]]
 
-  # Predictive t
-  f <- FF(theta = a0, lambda = lambda)
-  FF_prime_a <- FF_prime(theta = a0, lambda = lambda)
-  q <- drop(crossprod(FF_prime_a, R0 %*% FF_prime_a))
-  v <- .variance_law(mu = f, type = variance_law[["type"]],
-                     p = variance_law[["p"]])
-  Q <- q + v * s0
+  # If data is missing then skip the Kalman updating, posterior = prior
+  if (is.na(y)) {
+    m <- a0
+    C <- R0
+    n <- n0
+    s <- s0
+    lpl <- 0
+  } else {
+    # Predictive t
+    f <- FF(theta = a0, lambda = lambda)
+    FF_prime_a <- FF_prime(theta = a0, lambda = lambda)
+    k <- .variance_law(mu = f, type = variance_law[["type"]],
+                       p = variance_law[["p"]])
+    q <- s0 * k + drop(crossprod(FF_prime_a, R0 %*% FF_prime_a))
 
-  # Posterior at t
-  e <- y - f
+    # Posterior at t
+    e <- y - f
 
-  # Adaptive coefficient vector
-  A <- (R0 %*% FF_prime_a) / Q
+    # Adaptive coefficient vector
+    A <- (R0 %*% FF_prime_a) / q
 
-  # Volatility estimate ratio
-  r <- (n0 + e^2 / Q) / (n0 + 1)
+    # Volatility estimate ratio
+    r <- (n0 + e^2 / q) / (n0 + 1)
 
-  # Kalman filter update
-  n <- n0 + 1
-  s <- r * s0
-  m <- drop(a0 + A %*% e)
-  C <- r * (R0 - Q * tcrossprod(A, A))
+    # Kalman filter update
+    n <- n0 + 1
+    s <- r * s0
+    m <- drop(a0 + A %*% e)
+    C <- r * (R0 - q * tcrossprod(A, A))
 
+    # Log-predictive likelihood
+    lpl <- log(1/sqrt(q) * dt((y - f)/sqrt(q), n0))
+  }
   # Prior t + 1
   a <- g(m)
   GG_m <- GG(m)
@@ -142,11 +167,21 @@ update_moments.dgegm <- function(object, time) {
   R <- D * P
   n <- df_variance * n
 
+  # Set names
   colnames(R) <- rownames(R) <- colnames(C) <- parms_names
   names(a) <- names(m) <- parms_names
 
-  list(posterior = list(m = m, C = C, n = n, s = s),
-       predictive = list(f = f, q = q, n = n0, s = s0),
-       prior = list(a = a, R = R, W = R - P, n = n, s = s))
+  # Save posterior
+  object[["posterior"]] <- list(m = m, C = C, n = n, s = s)
+
+  # Update the prior to t + 1
+  object[["prior"]] <- list(a = a, R = R, W = R - P, n = n, s = s)
+
+  # Update the log-predictive likelihood
+  object[["loglik"]] <- object[["loglik"]] + lpl
+
+  object[["predictive"]] <- list(f = f, q = q)
+
+  object
 }
 

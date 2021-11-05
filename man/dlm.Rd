@@ -10,10 +10,7 @@ dlm(
   xreg = NULL,
   discount_factors = list(polynomial = 0.95, seasonal = 0.98, regressors = 0.99),
   df_variance = 1,
-  variance_law = list(type = "identity", power = 2),
-  prior = NULL,
-  n = 1,
-  s = 1
+  variance_law = list(type = "identity", power = 2)
 )
 }
 \arguments{
@@ -30,11 +27,6 @@ dlm(
 \item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
 The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
-
-\item{prior}{list. If specified it should contains prior for state parameters.}
-
-\item{n, s}{numeric. Prior sample size and mean for the variance, respectively.
-For both parameter the default is 1.}
 }
 \description{
 Create object of class \code{dlm}.

@@ -7,6 +7,8 @@
 #' \eqn{\mathbf{R}_0}, for the state vector.
 #'
 #' @param object an object of class \code{dlm} or \code{dgegm}.
+#' @param y numeric. prior first observations use to compute the prior moments.
+#' @param ... currently not used.
 #'
 #' @details For \code{dlm} objects use linear model to define the prior
 #' moments, the mean and covariance matrix, of model components.
@@ -22,20 +24,16 @@
 
 #' @rdname define_prior
 #' @export
-define_prior <- function(object){
+define_prior <- function(object, ...){
   UseMethod("define_prior", object)
 }
 
 #' @rdname define_prior
 #' @export
-define_prior.dlm <- function(object) {
-
-  if (is.null(object[["prior_length"]]))
-    object[["prior_length"]] <- 10L
+define_prior.dlm <- function(object, y, ...) {
 
   FF <- object[["FF"]]
   n <- object[["prior_length"]]
-  y <- object[["y"]][seq_len(n)]
   t <- seq_len(n)
   X <- matrix(1, nrow = n)
   if (object[["polynomial_order"]] > 1L)
@@ -49,6 +47,10 @@ define_prior.dlm <- function(object) {
   dlm_mean <- fit_lm[["coefficients"]]
   g <- max(2, floor(n / 2))
   dlm_vcov <- (g / (1 + g)) * vcov(fit_lm)
+  # Sanity check for NA value
+  dlm_mean[is.na(dlm_mean)] <- 0
+  dlm_vcov[is.na(dlm_vcov)] <- 100
+  # Set zero for covariance terms
   dlm_vcov[-which(dlm_vcov == diag(dlm_vcov))] <- 0
   names(dlm_mean) <- colnames(X)
   colnames(dlm_vcov) <- rownames(dlm_vcov) <- colnames(X)
@@ -69,9 +71,9 @@ define_prior.dlm <- function(object) {
 
 #' @rdname define_prior
 #' @export
-define_prior.dgegm <- function(object) {
+define_prior.dgegm <- function(object, y, ...) {
   parms_names <- object[["parameters_names"]]
-  y1 <- object[["y"]][1L]
+  y1 <- y[1L]
   lambda <- object[["lambda"]]
   a11 <- if (lambda == 0) log(y1) else y1 ^ lambda
   a0 <- c(a11, 0.001, 0.95)

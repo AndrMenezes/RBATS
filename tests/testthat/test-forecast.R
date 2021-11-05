@@ -1,4 +1,5 @@
 test_that("forecast method works for level and growth models", {
+
   y <- c(Nile)
   # Define the model
   model_object <- dlm(
@@ -8,9 +9,10 @@ test_that("forecast method works for level and growth models", {
   )
   # Fitting the model
   fitted_model <- fit(object = model_object, y = y, prior_length = 10)
+  model_object <- fitted_model$model
   # Forecasting
-  fcast_pred <- forecast(fitted_model, horizon = 10)
-  fcast_pred_parms <- forecast(fitted_model, horizon = 10, state_parameters = TRUE)
+  fcast_pred <- forecast(model_object, horizon = 10)
+  fcast_pred_parms <- forecast(model_object, horizon = 10, state_parameters = TRUE)
 
   expect_s3_class(fcast_pred$predictive, "data.frame")
   expect_null(fcast_pred$state_parameters)
@@ -28,9 +30,10 @@ test_that("forecast method works for seasonal models", {
   )
   # Fitting the model
   fitted_model <- fit(object = model_object, y = y, prior_length = 20)
+  model_object <- fitted_model$model
   # Forecasting
-  fcast_pred <- forecast(fitted_model, horizon = 10)
-  fcast_pred_parms <- forecast(fitted_model, horizon = 10, state_parameters = TRUE)
+  fcast_pred <- forecast(model_object, horizon = 10)
+  fcast_pred_parms <- forecast(model_object, horizon = 10, state_parameters = TRUE)
 
   expect_s3_class(fcast_pred$predictive, "data.frame")
   expect_null(fcast_pred$state_parameters)
@@ -51,12 +54,34 @@ test_that("forecast method works for regression models", {
   )
   # Fitting the model
   fitted_model <- fit(object = model_object, y = y, prior_length = 20)
+  model_object <- fitted_model$model
   # Forecasting
   h <- 10
   X_future <- matrix(rnorm(2 * h), ncol = 2)
-  fcast_pred <- forecast(fitted_model, horizon = h, xreg = X_future)
-  fcast_pred_parms <- forecast(fitted_model, horizon = h, xreg = X_future,
+  fcast_pred <- forecast(model_object, horizon = h, xreg = X_future)
+  fcast_pred_parms <- forecast(model_object, horizon = h, xreg = X_future,
                                state_parameters = TRUE)
+
+  expect_s3_class(fcast_pred$predictive, "data.frame")
+  expect_null(fcast_pred$state_parameters)
+  expect_s3_class(fcast_pred_parms$state_parameters, "data.frame")
+  expect_s3_class(fcast_pred_parms$state_parameters, "data.frame")
+})
+
+test_that("forecast method works for dgegm class", {
+  y <- aids_brasil$cases
+
+  # Define the model
+  model_object <- dgegm(lambda = 0, discount_factors = c(0.90, 0.90, 0.998),
+                        variance_law = list(type = "poisson"))
+  # Fitting the model
+  fitted_model <- fit(object = model_object, y = y)
+  model_object <- fitted_model$model
+
+  # Forecasting
+  h <- 5
+  fcast_pred <- forecast(model_object, horizon = h)
+  fcast_pred_parms <- forecast(model_object, horizon = h, state_parameters = TRUE)
 
   expect_s3_class(fcast_pred$predictive, "data.frame")
   expect_null(fcast_pred$state_parameters)

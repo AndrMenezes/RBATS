@@ -3,25 +3,31 @@
 \name{s3methods}
 \alias{s3methods}
 \alias{print.dlm}
-\alias{print.dgegm}
 \alias{print.dlm.fit}
+\alias{print.dgegm}
 \alias{print.dgegm.fit}
 \alias{print.dlm.forecast}
+\alias{logLik.dlm}
 \alias{logLik.dlm.fit}
+\alias{logLik.dgegm}
 \alias{logLik.dgegm.fit}
 \title{S3 methods for \code{dlm} objects}
 \usage{
 \method{print}{dlm}(x, ...)
 
-\method{print}{dgegm}(x, ...)
-
 \method{print}{dlm.fit}(x, ...)
+
+\method{print}{dgegm}(x, ...)
 
 \method{print}{dgegm.fit}(x, ...)
 
 \method{print}{dlm.forecast}(x, ...)
 
+\method{logLik}{dlm}(object, ...)
+
 \method{logLik}{dlm.fit}(object, ...)
+
+\method{logLik}{dgegm}(object, ...)
 
 \method{logLik}{dgegm.fit}(object, ...)
 }

@@ -2,23 +2,47 @@
 % Please edit documentation in R/fit.R
 \name{fit}
 \alias{fit}
+\alias{forward_filter}
+\alias{backward_smoother}
 \alias{fit.dlm}
-\alias{fit.dgegm}
+\alias{forward_filter.dlm}
+\alias{backward_smoother.dlm}
 \title{Fitting Bayesian DLM and DGEGM}
 \usage{
 fit(object, y, ...)
+
+forward_filter(object, y, ...)
+
+backward_smoother(object, y, ...)
 
 \method{fit}{dlm}(
   object,
   y,
   smooth = TRUE,
+  a0 = NULL,
+  R0 = NULL,
+  n = 1,
+  s = 1,
   prior_length = 10L,
   interval = TRUE,
   level = 0.1,
   ...
 )
 
-\method{fit}{dgegm}(object, y, interval = TRUE, level = 0.1, ...)
+\method{forward_filter}{dlm}(
+  object,
+  y,
+  a0 = NULL,
+  R0 = NULL,
+  n = 1,
+  s = 1,
+  prior_length = 10L,
+  interval = TRUE,
+  level = 0.1,
+  ...
+)
+
+\method{backward_smoother}{dlm}(object, state_parameters, interval = TRUE, level = 0.1, ...)
 }
 \arguments{
 \item{object}{a model object of class \code{dlm} or \code{dgem}.}
@@ -29,12 +53,21 @@ fit(object, y, ...)
 
 \item{smooth}{logical. Should smoothing be performed? Default is \code{TRUE}.}
 
+\item{a0}{vector.}
+
+\item{R0}{matrix.}
+
+\item{n, s}{numeric. Prior sample size and mean for the variance, respectively.
+For both parameter the default is 1.}
+
 \item{prior_length}{integer. Number of observations to use to obtain the prior moments.
 Default is 10.}
 
 \item{interval}{logical. Should exact credible interval be returned? Default is \code{TRUE}.}
 
 \item{level}{numeric. The probability level of the credible interval. Default is \code{0.10}.}
+
+\item{state_parameters}{list.}
 }
 \description{
 Method \code{fit} applied to objects of class \code{dlm} or \code{dgem}

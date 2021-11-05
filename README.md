@@ -26,12 +26,12 @@ remotes::install_github("AndrMenezes/RBATS", build_vignettes = TRUE)
 The package is structured based on S3 classes objects. The following
 functions created the two main objects of the package:
 
--   `dlm`: create an object of class `dlm` for Dynamic Linear Models.
+-   `dlm`: create and object of class `dlm` for Dynamic Linear Models.
 
--   `dgegm`: create an object of class `dgegm` for Dynamic Generalized
+-   `dgegm`: create and object of class `dgegm` for Dynamic Generalized
     Exponential Growth Models.
 
-Each of these objects have the following methods:
+Each of this class objects have the following methods:
 
 -   `update_moments`: update the moments of state parameters for `dlm`
     and `dgegm` objects.

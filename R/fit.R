@@ -166,7 +166,11 @@ backward_smoother.dlm <- function(object, state_parameters, interval = TRUE,
     s_t <- state_parameters[["posterior"]][[t]][["s"]]
     a_t_1 <- state_parameters[["prior"]][[t + 1]][["a"]]
     R_t_1 <- state_parameters[["prior"]][[t + 1]][["R"]]
-    B_t <- tcrossprod(C_t, GG) %*% solve(R_t_1)
+    
+    # inv_R_t_1 <- solve(R_t_1)
+    inv_R_t_1 <- chol2inv(chol(R_t_1))
+    B_t <- tcrossprod(C_t, GG) %*% inv_R_t_1
+
 
     # Retrospective prior: a_T(t - T) and R_T(t - T)
     a_T <- drop(m_t - B_t %*% (a_t_1 - a_T_t_1))

@@ -47,7 +47,7 @@ dgegm <- function(lambda = 1, discount_factors, df_variance = 1,
   }
   # Matrix of discount factors
   D <- diag(x = 1/discount_factors, nrow = 3, ncol = 3)
-  D[-which(D==diag(D))] <- 1
+  D[-which(D == diag(D))] <- 1
 
   structure(
     list(call = match.call(), lambda = lambda, FF = FF, FF_prime = FF_prime, g = g,

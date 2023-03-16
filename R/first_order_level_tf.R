@@ -1,25 +1,26 @@
 rm(list = ls())
 library(ggplot2)
+library(dplyr)
 
 # Simulate the data
 nobs <- 80
-sd_y <- 10
-sd_mu <- 0.1
-sd_E <- 0.5
-sd_beta <- 0.1
-true_lambda <- 0.85
+sd_y <- 1
+sd_mu <- 0.05
+sd_E <- 0.05
+sd_beta <- 0.05
+true_lambda <- 0.80
 
 E <- numeric(nobs)
 beta <- numeric(nobs)
 mu <- numeric(nobs)
 y <- numeric(nobs)
 E[1L] <- 0
-beta[1L] <- 10
+beta[1L] <- 2
 mu[1L] <- 2
 
 set.seed(66)
 y[1L] <- mu[1L] + E[1L] + rnorm(n = 1, sd = sd_y)
-x <- numeric(nobs) # rpois(nobs, lambda = 1)
+x <- numeric(nobs)
 x[c(5, 20, 30, 40, 60)] = c(4, 2.5, 10, 7.5, 5)
 
 for (t in seq_len(nobs)[-1]) {
@@ -37,6 +38,11 @@ plot(E, main = expression(E[t]))
 plot(beta, main = expression(beta[t]))
 graphics.off()
 
+data_true_values <- data.frame(t = seq_len(nobs), y = y, E = E, beta = beta,
+                               mu = mu, lambda = true_lambda)
+data_true_values <- tidyr::pivot_longer(
+  data_true_values, cols = -t, names_to = "parameter",
+  values_to = "true_value")
 
 # Model components
 g <- function(theta, x) {
@@ -59,14 +65,14 @@ GG <- function(theta, x) {
 FF <- matrix(c(1, 1, 0, 0), ncol = 1)
 
 # Matrix of discount factors
-discount_factors <- c(0.95, 0.995, 0.995, 0.995)
+discount_factors <- c(0.98, 0.998, 0.995, 0.98)
 D <- diag(x = 1/discount_factors, nrow = 4, ncol = 4)
 D[-which(D == diag(D))] <- 1
 df_variance <- 1
 
 # Prior for the state parameters
 a0 <- c(mu[1L], 0, 0, 0)
-R0 <- diag(x = c(20, 100, 0.025, 10), nrow = 4)
+R0 <- diag(x = c(100, 100, 100, 100), nrow = 4)
 # Prior for the observational variance
 n0 <- 1
 s0 <- 1
@@ -103,7 +109,7 @@ for (t in seq_len(nobs)) {
   n <- n0 + 1
   s <- r * s0
   m <- drop(a0 + A %*% e)
-  C <- r * (R0 - q * tcrossprod(A))
+  C <- 1 * (R0 - q * tcrossprod(A))
 
   # Log-predictive likelihood
   lpl <- log(1/sqrt(q) * dt((y - f) / sqrt(q), n0))
@@ -142,8 +148,8 @@ for (t in seq_len(nobs)) {
 data_predictive <- data.frame(t = seq_along(list_predictive), y = y)
 data_predictive$mean <- sapply(list_predictive, function(z) unname(z[["f"]]))
 data_predictive$variance <- sapply(list_predictive, function(z) unname(z[["q"]]))
-data_predictive$ci_lower <- data_predictive$mean - 1.96 * sqrt(data_predictive$variance)
-data_predictive$ci_upper <- data_predictive$mean + 1.96 * sqrt(data_predictive$variance)
+data_predictive$ci_lower <- data_predictive$mean - 1.28 * sqrt(data_predictive$variance)
+data_predictive$ci_upper <- data_predictive$mean + 1.28 * sqrt(data_predictive$variance)
 ggplot(data_predictive[-c(1:6), ], aes(x = t, y = y)) +
   geom_point(size = 2) +
   geom_line(aes(y = mean), col = "blue") +
@@ -168,12 +174,29 @@ lt_parms <- lapply(parms_names, function(parm) {
 data_posterior <- do.call(rbind, lt_parms)
 data_posterior$ci_lower <- data_posterior$mean - 1.96 * sqrt(data_posterior$variance)
 data_posterior$ci_upper <- data_posterior$mean + 1.96 * sqrt(data_posterior$variance)
+head(data_posterior)
+head(data_true_values)
 
-ggplot(data_posterior[data_posterior$t > 6, ], aes(x = t, y = mean)) +
-  facet_wrap(~parameter, scales = "free_y") +
+data_posterior <- dplyr::left_join(data_posterior, data_true_values,
+                                   by = c("t", "parameter"))
+data_posterior |>
+  dplyr::filter(parameter == "mu") |>
+  dplyr::mutate(y = y) |>
+  ggplot(aes(x = t, y = y)) +
+  geom_point(aes(col = "Observed")) +
+  geom_line(aes(y = mean, col = "Posterior level")) +
+  geom_line(aes(y = true_value, col = "Observed level")) +
   geom_ribbon(aes(ymax = ci_upper, ymin = ci_lower), fill = "grey69",
               alpha = 0.8) +
-  geom_line()
+  scale_color_manual(values = c("black", "red", "blue"))
+
+ggplot(data_posterior[data_posterior$t > 6, ],
+       aes(x = t, y = true_value)) +
+  facet_wrap(~parameter, scales = "free_y") +
+  geom_point() +
+  geom_ribbon(aes(ymax = ci_upper, ymin = ci_lower), fill = "grey69",
+              alpha = 0.8) +
+  geom_line(aes(y = mean), col = "blue")
 
 
 ggplot(data_posterior[data_posterior$parameter == "lambda", ],

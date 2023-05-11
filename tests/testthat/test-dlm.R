@@ -1,7 +1,8 @@
 test_that("polynomial model works", {
   (m1 <- dlm(polynomial_order = 2, discount_factors = list(polynomial = c(0.95, 0.98))))
 
-  (m2 <- dlm(polynomial_order = 3, discount_factors = list(polynomial = c(0.95, 0.98, 0.99))))
+  (m2 <- dlm(polynomial_order = 3,
+             discount_factors = list(polynomial = c(0.95, 0.98, 0.99))))
 
   (m3 <- dlm(polynomial_order = 4,
              discount_factors = list(polynomial = c(0.95, 0.98, 0.99, 0.998))))

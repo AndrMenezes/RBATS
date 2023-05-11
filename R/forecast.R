@@ -143,10 +143,11 @@ forecast_marginal.dlm <- function(object, horizon, xreg = NULL, ...) {
 #' @rdname forecast.dlm
 #' @export
 forecast_aR.dlm <- function(object, horizon, ...) {
+
+  a <- if (is.null(object[["posterior"]])) object[["prior"]][["a"]] else object[["posterior"]][["m"]]
+  R <- if (is.null(object[["posterior"]])) object[["prior"]][["R"]] else object[["posterior"]][["C"]]
   G <- object[["GG"]]
-  a <- object[["prior"]][["a"]]
-  R <- object[["prior"]][["R"]]
-  W <- object[["prior"]][["W"]]
+  W <- (1 - object[["D"]]) * R
   G_h <- .matrix_power(G, horizon)
   a_h <- drop(G_h %*% a)
   R_h <- tcrossprod(G_h %*% R, G_h) + W

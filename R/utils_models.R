@@ -95,7 +95,7 @@
 }
 
 # Function from dlm package. (https://github.com/cran/dlm/blob/master/R/DLM.R)
-.bdiag <- function (...) {
+.bdiag <- function(...) {
   if (nargs() == 1L)
     x <- as.list(...)
   else x <- list(...)

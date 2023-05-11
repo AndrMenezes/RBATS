@@ -68,7 +68,7 @@ dlm <- function(polynomial_order = 1L,
 
   colnames(mod[["GG"]]) <- rownames(mod[["GG"]]) <- comp_names
 
-  # Discount factor and law for variance
+  # Discount factor and law for the observational variance
   mod[["df_variance"]] <- df_variance
   mod[["variance_law"]] <- variance_law
 

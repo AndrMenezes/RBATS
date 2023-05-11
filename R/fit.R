@@ -71,7 +71,8 @@ fit.dlm <- function(object, y, smooth = TRUE, a0 = NULL, R0 = NULL, n = 1, s = 1
 #' @rdname fit.dlm
 #' @export
 forward_filter.dlm <- function(object, y, a0 = NULL, R0 = NULL, n = 1, s = 1,
-                               prior_length = 10L, interval = TRUE, level = 0.10, ...) {
+                               prior_length = 10L, interval = TRUE,
+                               level = 0.10, cpp = FALSE, ...) {
 
 
   # Check if the prior was specified
@@ -90,22 +91,54 @@ forward_filter.dlm <- function(object, y, a0 = NULL, R0 = NULL, n = 1, s = 1,
   list_prior[[1L]][["s"]] <- s
   object[["prior"]] <- list_prior[[1L]]
 
-  list_posterior <- list()
-  list_predictive <- list()
-  for (t in seq_along(y)) {
+  if (cpp) {
+    out_cpp <- forward_filter_dlm(y = y,
+                                  F = object[["FF"]],
+                                  G = object[["GG"]],
+                                  D = object[["D"]],
+                                  a = object[["prior"]][["a"]],
+                                  R = object[["prior"]][["R"]],
+                                  n = n, s = s,
+                                  df_variance = object[["df_variance"]])
+    list_prior <- lapply(seq_along(out_cpp[["a"]]), function(j) {
+      a <- drop(out_cpp[["a"]][[j]])
+      R <- out_cpp[["R"]][[j]]
+      names(a) <- rownames(R) <- colnames(R) <- object[["parameters_names"]]
+      list(a = a, R = R, n = out_cpp[["n"]][[j]], s = out_cpp[["s"]][[j]])
+    })
+    list_posterior <- lapply(seq_along(out_cpp[["m"]]), function(j) {
+      m <- drop(out_cpp[["m"]][[j]])
+      C <- out_cpp[["C"]][[j]]
+      names(m) <- rownames(C) <- colnames(C) <- object[["parameters_names"]]
+      list(m = m, C = C, n = out_cpp[["n"]][[j + 1]],
+           s = out_cpp[["s"]][[j + 1]])
+    })
+    list_predictive <- lapply(seq_along(out_cpp[["f"]]), function(j) {
+      list(f = out_cpp[["f"]][[j]], q = out_cpp[["q"]][[j]],
+           n = out_cpp[["n"]][[j]])
+    })
+    object[["prior"]] <- list_prior[[length(list_prior)]]
+    object[["posterior"]] <- list_posterior[[length(list_posterior)]]
+    object[["loglik"]] <- out_cpp
+  } else {
 
-    # One-step ahead predictive parameters distribution
-    list_predictive[[t]] <- forecast_marginal(
-      object, xreg = object[["xreg"]][t, , drop = FALSE], horizon = 1)[["predictive"]]
+    list_posterior <- list()
+    list_predictive <- list()
+    for (t in seq_along(y)) {
 
-    # Updating
-    object <- update_moments(object, y = y[t], X = object[["xreg"]][t, , drop = FALSE])
+      # Update
+      object <- update_moments(object, y = y[t],
+                               X = object[["xreg"]][t, , drop = FALSE])
 
-    # Posterior parameters for t
-    list_posterior[[t]] <- object[["posterior"]]
+      # Predictive at t (Y_t | D_{t-1})
+      list_predictive[[t]] <- object[["predictive"]]
 
-    # Prior parameters for t + 1
-    list_prior[[t + 1]] <- object[["prior"]]
+      # Posterior at t (theta_t | D_{t})
+      list_posterior[[t]] <- object[["posterior"]]
+
+      # Prior at t + 1 (theta_{t+1} | D_{t})
+      list_prior[[t + 1]] <- object[["prior"]]
+    }
   }
 
   # Organize the results in data frames
@@ -166,7 +199,7 @@ backward_smoother.dlm <- function(object, state_parameters, interval = TRUE,
     s_t <- state_parameters[["posterior"]][[t]][["s"]]
     a_t_1 <- state_parameters[["prior"]][[t + 1]][["a"]]
     R_t_1 <- state_parameters[["prior"]][[t + 1]][["R"]]
-    
+
     # inv_R_t_1 <- solve(R_t_1)
     inv_R_t_1 <- chol2inv(chol(R_t_1))
     B_t <- tcrossprod(C_t, GG) %*% inv_R_t_1

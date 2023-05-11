@@ -1,9 +1,9 @@
 .variance_law <- function(type, mu, p) {
-  switch (type,
-          "identity" = 1,
-          "poisson" = mu,
-          "binomial" = mu * (1 - mu),
-          "power" = mu ^ p
+  switch(type,
+        "identity" = 1,
+        "poisson" = mu,
+        "binomial" = mu * (1 - mu),
+        "power" = mu ^ p
   )
 }
 
@@ -130,7 +130,7 @@
     data_output$s <- sapply(list_smooth, function(z) unname(z[["s"]]))
   }
   if (interval) {
-    qa <- qnorm(1-level / 2)
+    qa <- qnorm(1 - level / 2)
     data_output$ci_lower <- data_output$mean - qa * sqrt(data_output$variance)
     data_output$ci_upper <- data_output$mean + qa * sqrt(data_output$variance)
   }

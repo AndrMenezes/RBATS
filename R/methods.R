@@ -29,14 +29,15 @@ print.dlm <- function(x, ...) {
   var_law <- if (x$variance_law$type == "power") paste0("power with p = ", x$variance_law$power) else x$variance_law$type
   cat("Variance law:", var_law, "\n")
 
-  if (!is.null(x[["prior"]])) {
+  if (!is.null(x[["posterior"]])) {
     cat("\nPosterior parameters at time ", x[["time"]], ":\n", sep = "")
     tab_filter <- data.frame(parameter = x[["parameters_names"]],
                              mean = x[["posterior"]][["m"]],
-                             variance = diag(x[["posterior"]][["C"]]), row.names = NULL)
+                             variance = diag(x[["posterior"]][["C"]]),
+                             row.names = NULL)
     print(tab_filter)
     cat("\n")
-    cat("Predictive log-likelihod: ", logLik(x)[1L], "\n", sep = "")
+    cat("Predictive log-likelihood: ", logLik(x)[1L], "\n", sep = "")
   }
   invisible()
 }

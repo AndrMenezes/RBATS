@@ -5,7 +5,6 @@ forward_filter_cpp.dlm <- function(model, y, a, R, n = 1, s = 1) {
                               D = model[["D"]], a = a, R = R, n = n,
                               s = s, df_variance = model[["df_variance"]])
   } else {
-    cat("Not implemented yet.")
     out <- forward_filter_dlm_X(y = y, F = model[["FF"]], X = t(model[["X"]]),
                                 G = model[["GG"]], D = model[["D"]],
                                 a = a, R = R, n = n, s = s,
@@ -14,11 +13,23 @@ forward_filter_cpp.dlm <- function(model, y, a, R, n = 1, s = 1) {
   structure(out, class = "dlm.forward_filter")
 }
 
-backward_smooth_cpp.dlm <- function(model, filtering_parameters) {
+backward_smoother_cpp.dlm <- function(model, filtering_parameters) {
 
-  list()
-
-
+  if (is.null(model[["X"]])) {
+    out <- backward_smoother_dlm(F = model[["FF"]], G = model[["GG"]],
+                                 m_seq = filtering_parameters[["m"]],
+                                 a_seq = filtering_parameters[["a"]],
+                                 C_seq = filtering_parameters[["C"]],
+                                 R_seq = filtering_parameters[["R"]])
+  } else {
+    out <- backward_smoother_dlm_X(F = model[["FF"]], G = model[["GG"]],
+                                   X = t(model[["X"]]),
+                                   m_seq = filtering_parameters[["m"]],
+                                   a_seq = filtering_parameters[["a"]],
+                                   C_seq = filtering_parameters[["C"]],
+                                   R_seq = filtering_parameters[["R"]])
+  }
+  structure(out, class = "dlm.backward_smoother")
 }
 
 fit_cpp.dlm <- function(model, y, a, R, n = 1, s = 1, smooth = TRUE) {
@@ -27,12 +38,20 @@ fit_cpp.dlm <- function(model, y, a, R, n = 1, s = 1, smooth = TRUE) {
                                        a = a, R = R, n = n, s = s)
   smoothed = NULL
   if (smooth) {
-    smoothed <- list()
+    smoothed <- backward_smoother_cpp.dlm(model = model,
+                                          filtering_parameters = filtered)
   }
 
   # Update the model object
-  model$prior <- list()
-  model$posterior <- list()
+  t_end <- ncol(filtered[["m"]])
+  model[["prior"]] <- list(a = filtered[["a"]][, t_end + 1],
+                           R = filtered[["R"]][, , t_end + 1],
+                           n = filtered[["n"]][t_end + 1],
+                           s = filtered[["s"]][t_end + 1])
+  model[["posterior"]] <- list(m = filtered[["m"]][, t_end],
+                               C = filtered[["C"]][, , t_end],
+                               n = filtered[["n"]][t_end],
+                               s = filtered[["s"]][t_end])
 
   # Return an object of class fit.dlm
   structure(list(model = model, filtered = filtered, smoothed = smoothed,

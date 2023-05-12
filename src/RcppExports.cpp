@@ -85,12 +85,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// backward_smoother_dlm_X
+Rcpp::List backward_smoother_dlm_X(arma::vec const F, arma::mat const G, arma::mat const X, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
+RcppExport SEXP _RBATS_backward_smoother_dlm_X(SEXP FSEXP, SEXP GSEXP, SEXP XSEXP, SEXP m_seqSEXP, SEXP a_seqSEXP, SEXP C_seqSEXP, SEXP R_seqSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::mat const >::type X(XSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type m_seq(m_seqSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type a_seq(a_seqSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type C_seq(C_seqSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type R_seq(R_seqSEXP);
+    rcpp_result_gen = Rcpp::wrap(backward_smoother_dlm_X(F, G, X, m_seq, a_seq, C_seq, R_seq));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RBATS_update_dlm", (DL_FUNC) &_RBATS_update_dlm, 9},
     {"_RBATS_forward_filter_dlm", (DL_FUNC) &_RBATS_forward_filter_dlm, 9},
     {"_RBATS_forward_filter_dlm_X", (DL_FUNC) &_RBATS_forward_filter_dlm_X, 10},
     {"_RBATS_backward_smoother_dlm", (DL_FUNC) &_RBATS_backward_smoother_dlm, 6},
+    {"_RBATS_backward_smoother_dlm_X", (DL_FUNC) &_RBATS_backward_smoother_dlm_X, 7},
     {NULL, NULL, 0}
 };
 

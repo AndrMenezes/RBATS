@@ -187,13 +187,17 @@ Rcpp::List forward_filter_dlm_X(arma::vec const y,
 //*****************************************************************************
 // Forward filter with automatic monitoring and adaptation
 
+// [[Rcpp::export]]
 double bayes_factor(double e, double mu, double tau){
   return(
-    tau * std::exp(1 / 2 / std::pow(tau, 2) * std::pow((e - mu), 2) - std::pow(e, 2))
+    tau * std::exp((std::pow(e - mu, 2) - std::pow(e, 2)) / (2 * std::pow(tau,2)))
   );
+  // return(
+  //   std::exp(0.5 * (std::pow(mu, 2)) - e * mu)
+  // );
 }
 
-
+// [[Rcpp::export]]
 Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
                                       arma::vec const F,
                                       arma::mat const G,
@@ -220,6 +224,9 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
   arma::vec q_seq(k, arma::fill::zeros);
   arma::vec s_seq(k + 1, arma::fill::zeros);
   arma::vec n_seq(k + 1, arma::fill::zeros);
+  arma::vec H_seq(k, arma::fill::zeros);
+  arma::vec L_seq(k, arma::fill::zeros);
+  arma::vec l_seq(k, arma::fill::zeros);
 
   //
   a_seq.col(0) = a;
@@ -249,6 +256,9 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
 
   f_seq(0) = tmp["f"];
   q_seq(0) = tmp["q"];
+  H_seq(0) = Ht;
+  L_seq(0) = Lt;
+  l_seq(0) = lt;
   m_seq.col(0) = Rcpp::as<arma::vec>(tmp["m"]);
   C_seq.slice(0) = Rcpp::as<arma::mat>(tmp["C"]);
   a_seq.col(1) = Rcpp::as<arma::vec>(tmp["a"]);
@@ -256,8 +266,8 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
   n_seq(1) = tmp["n"];
   s_seq(1) = tmp["s"];
 
-  // Start the automatic monitor with intervention after time t=2*p
-  int t1 = 2 * p;
+  // Start the automatic monitor with intervention after time t=max(2*p, 6)
+  int t1 = std::max(2 * p, 6);
   for (int t = 1; t < t1; ++t){
     // Compute the standardized error e_t ~ N(0, 1)
     f = arma::as_scalar(F.t() * a);
@@ -273,6 +283,10 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
     }
     Lt = Ht * std::min<double>(1, Lt);
 
+    H_seq(t) = Ht;
+    L_seq(t) = Lt;
+    l_seq(t) = lt;
+
     // Bayes update
     Rcpp::List tmp = update_dlm(y[t], F, G, D, a_seq.col(t), R_seq.slice(t),
                                 n_seq[t], s_seq[t], df_variance);
@@ -281,24 +295,29 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
     curr_lpl = tmp["lpl"];
     lpl += curr_lpl;
 
+    a = Rcpp::as<arma::vec>(tmp["a"]);
+    R = Rcpp::as<arma::mat>(tmp["R"]);
+
     // Save parameters
     f_seq(t) = f;
     q_seq(t) = q;
     m_seq.col(t) = Rcpp::as<arma::vec>(tmp["m"]);
     C_seq.slice(t) = Rcpp::as<arma::mat>(tmp["C"]);
-    a_seq.col(t + 1) = Rcpp::as<arma::vec>(tmp["a"]);
+    a_seq.col(t + 1) = a;
     R_seq.slice(t + 1) = Rcpp::as<arma::mat>(tmp["R"]);
     n_seq(t + 1) = tmp["n"];
     s_seq(t + 1) = tmp["s"];
   }
 
-
+  // Start the automatic monitor with intervention after initial time
+  double y_curr;
   for (int t = t1; t < k; ++t){
 
+    y_curr = y[t];
     // Compute the standardized error e_t ~ N(0, 1)
     f = arma::as_scalar(F.t() * a);
     q = s + arma::as_scalar(F.t() * R * F);
-    e = (y[t] - f) / std::sqrt(q);
+    e = (y_curr - f) / std::sqrt(q);
 
     // Bayes factor
     Ht = bayes_factor(e, location_shift, scale_shift);
@@ -309,12 +328,19 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
     }
     Lt = Ht * std::min<double>(1, Lt);
 
+    H_seq(t) = Ht;
+    L_seq(t) = Lt;
+    l_seq(t) = lt;
+
+    std::cout << "t: " << t << " f: " << f << " q: " << q;
+    std::cout << " e: " << e << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
+
     // Check for parametric change
     if ((Ht >= bf_threshold) & ((Lt < bf_threshold) | (lt > 2))){
-      std::cout << "Parametric change";
       // Get back at time t - lt - 1 and increase the prior, R.
       int index = t - lt - 1;
-      R_seq.slice(index) = R_seq.slice(index) * exception_D;
+      std::cout << "Parametric change at " << index << "\n";
+      R_seq.slice(index) = R_seq.slice(index) % exception_D;
       for (int i = index; i < t; i++) {
         Rcpp::List tmp = update_dlm(y[i], F, G, D, a_seq.col(i), R_seq.slice(i),
                                     n_seq[i], s_seq[i], df_variance);
@@ -327,25 +353,38 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
         n_seq(i + 1) = tmp["n"];
         s_seq(i + 1) = tmp["s"];
       }
+      Lt = 1;
+      lt = 0;
     }
 
-
+    bool potential_outlier = FALSE;
     if (Ht < bf_threshold) {
-      std::cout << "Potential outlier";
+      std::cout << "Potential outlier \n";
+      potential_outlier = TRUE;
+      y_curr = NA_REAL;
+      Lt = 1;
+      lt = 0;
     }
 
-    Rcpp::List tmp = update_dlm(y[t], F, G, D, a_seq.col(t), R_seq.slice(t),
+    Rcpp::List tmp = update_dlm(y_curr, F, G, D, a_seq.col(t), R_seq.slice(t),
                                 n_seq[t], s_seq[t], df_variance);
 
     curr_lpl = tmp["lpl"];
     lpl += curr_lpl;
 
+    a = Rcpp::as<arma::vec>(tmp["a"]);
+    R = Rcpp::as<arma::mat>(tmp["R"]);
+
+    if (potential_outlier){
+      R = R % exception_D;
+    }
+
     f_seq(t) = tmp["f"];
     q_seq(t) = tmp["q"];
     m_seq.col(t) = Rcpp::as<arma::vec>(tmp["m"]);
     C_seq.slice(t) = Rcpp::as<arma::mat>(tmp["C"]);
-    a_seq.col(t + 1) = Rcpp::as<arma::vec>(tmp["a"]);
-    R_seq.slice(t + 1) = Rcpp::as<arma::mat>(tmp["R"]);
+    a_seq.col(t + 1) = a;
+    R_seq.slice(t + 1) = R;
     n_seq(t + 1) = tmp["n"];
     s_seq(t + 1) = tmp["s"];
   }
@@ -359,6 +398,9 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
       Rcpp::Named("s")=s_seq,
       Rcpp::Named("f")=f_seq,
       Rcpp::Named("q")=q_seq,
+      Rcpp::Named("H")=H_seq,
+      Rcpp::Named("L")=L_seq,
+      Rcpp::Named("l")=l_seq,
       Rcpp::Named("loglik")=lpl));
 
 }

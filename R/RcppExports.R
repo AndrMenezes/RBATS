@@ -13,3 +13,31 @@ forward_filter_dlm_X <- function(y, F, X, G, D, a, R, n, s, df_variance) {
     .Call(`_RBATS_forward_filter_dlm_X`, y, F, X, G, D, a, R, n, s, df_variance)
 }
 
+bayes_factor <- function(x, mu, tau) {
+    .Call(`_RBATS_bayes_factor`, x, mu, tau)
+}
+
+forward_filter_dlm_monitor <- function(y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start) {
+    .Call(`_RBATS_forward_filter_dlm_monitor`, y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start)
+}
+
+forward_filter_dlm_monitor_X <- function(y, F, X, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start) {
+    .Call(`_RBATS_forward_filter_dlm_monitor_X`, y, F, X, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start)
+}
+
+forward_filter_dlm_monitor_bilateral <- function(y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start) {
+    .Call(`_RBATS_forward_filter_dlm_monitor_bilateral`, y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start)
+}
+
+forward_filter_dlm_monitor_bilateral_X <- function(y, F, G, X, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start) {
+    .Call(`_RBATS_forward_filter_dlm_monitor_bilateral_X`, y, F, G, X, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start)
+}
+
+backward_smoother_dlm <- function(F, G, m_seq, a_seq, C_seq, R_seq) {
+    .Call(`_RBATS_backward_smoother_dlm`, F, G, m_seq, a_seq, C_seq, R_seq)
+}
+
+backward_smoother_dlm_X <- function(F, G, X, m_seq, a_seq, C_seq, R_seq) {
+    .Call(`_RBATS_backward_smoother_dlm_X`, F, G, X, m_seq, a_seq, C_seq, R_seq)
+}
+

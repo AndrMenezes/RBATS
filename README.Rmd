@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 
 # RBATS
 
-> The `RBATS` is an experimental R package for Bayesian Dynamic Models. The functionaly is based on the
+> The `RBATS` is an experimental R package for Bayesian Dynamic Models. The functionality is based on the
 [Bayesian Forecasting and Dynamic Models](http://www2.stat.duke.edu/~mw/West&HarrisonBook/)
 from West and Harrison (1997). The currently version of the package implements the Dynamic Linear Models and Dynamic Generalized Exponential Growth Models.
 

@@ -1,4 +1,15 @@
-forward_filter_cpp.dlm <- function(model, y, a, R, n = 1, s = 1) {
+forward_filter_cpp.dlm <- function(model, y, a, R, n = 1, s = 1,
+                                   monitor = FALSE,
+                                   monitor_parameters = list(
+                                     bf_threshold = 0.135,
+                                     location_shift = 4,
+                                     scale_shift = 1,
+                                     discount_factors = list(
+                                       level = 0.20,
+                                       growth = 0.40,
+                                       seasonal = 0.80,
+                                       regressors = 0.80)
+                                     )) {
 
   if (is.null(model[["X"]])) {
     out <- forward_filter_dlm(y = y, F = model[["FF"]], G = model[["GG"]],

@@ -5,26 +5,29 @@
 \title{Bayesian Dynamic Linear Model}
 \usage{
 dlm(
-  polynomial_order = 1L,
-  seasonal = list(type = c("none", "free", "fourier"), period = NULL, harmonics = NULL),
-  xreg = NULL,
-  discount_factors = list(polynomial = 0.95, seasonal = 0.98, regressors = 0.99),
+  polynomial = list(order = 1L, discount_factor = 0.95),
+  seasonal = list(type = c("none", "free", "fourier"), period = NULL, harmonics = NULL,
+    discount_factor = 0.98),
+  regressor = list(xreg = NULL, discount_factor = 0.99),
   df_variance = 1,
-  variance_law = list(type = "identity", power = 2)
+  variance_law = list(type = "identity", power = 2),
+  monitor = list(execute = FALSE, verbose = TRUE, start_time = 10L, bilateral = FALSE,
+    bf_threshold = 0.135, location_shift = 4, scale_shift = 1, discount_factors =
+    list(polynomial = 0.2, seasonal = 0.8, regressors = 0.8))
 )
 }
 \arguments{
-\item{polynomial_order}{integer. Order of polynomial model.}
+\item{polynomial}{list. Order of polynomial model.}
 
 \item{seasonal}{list. Components to specify seasonal components.}
 
-\item{xreg}{matrix. Regressors.}
-
-\item{discount_factors}{list. Discount factors for each model components.}
+\item{regressor}{list.}
 
 \item{df_variance}{numeric. Discount factor for observation variance. Use a beta-gamma random walk.}
 
-\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
+\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.}
+
+\item{monitor}{list.
 The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
 }

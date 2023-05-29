@@ -33,7 +33,7 @@ print.dlm <- function(x, ...) {
     cat("\nPosterior parameters at time ", x[["time"]], ":\n", sep = "")
     tab_filter <- data.frame(parameter = x[["parameters_names"]],
                              mean = x[["posterior"]][["m"]],
-                             variance = diag(x[["posterior"]][["C"]]),
+                             variance = diag(as.matrix(x[["posterior"]][["C"]])),
                              row.names = NULL)
     print(tab_filter)
     cat("\n")

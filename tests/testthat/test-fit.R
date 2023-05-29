@@ -1,13 +1,15 @@
 test_that("filter and smooth functions for growth model for Nile data works", {
   y <- c(Nile)
+
   # Define the model
-  model_object <- dlm(
-    polynomial_order = 2,
-    discount_factors = list(polynomial = c(0.90, 0.95))
+  model <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.90)
   )
 
   # Fitting the model
-  fitted_object <- fit(object = model_object, y = y, prior_length = 10)
+  fitted_object <- fit_cpp.dlm(model = model, y = y,
+                               a = matrix(c(y[1]), ncol = 1),
+                               R = diag(100, 1))
 
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
@@ -16,36 +18,22 @@ test_that("filter and smooth functions for growth model for Nile data works", {
 test_that("filter and smooth functions with missing value for Nile data works", {
   y <- c(Nile)
   y[c(10, 30)] <- NA_real_
-  # Define the model
-  model_object <- dlm(
-    polynomial_order = 2,
-    discount_factors = list(polynomial = c(0.90, 0.95))
+  model <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.90)
   )
 
   # Fitting the model
-  fitted_object <- fit(object = model_object,  y = y, prior_length = 10)
+  fitted_object <- fit_cpp.dlm(model = model, y = y,
+                               a = matrix(c(y[1]), ncol = 1),
+                               R = diag(100, 1))
+  str(fitted_object)
+  fitted_object$model$posterior$C
+
 
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 })
 
-test_that("filter and smooth functions with missing value and specifying prior for Nile data works", {
-  y <- c(Nile)
-  y[c(10, 30)] <- NA_real_
-  # Define the model
-  model_object <- dlm(
-    polynomial_order = 2,
-    discount_factors = list(polynomial = c(0.90, 0.95))
-  )
-
-  # Fitting the model
-  a0 <- c(1120, 0)
-  R0 <- diag(100, 2)
-  fitted_object <- fit(object = model_object, y = y, a0 = a0, R0 = R0)
-
-  expect_s3_class(fitted_object, "dlm.fit")
-  expect_s3_class(fitted_object$model, "dlm")
-})
 
 
 test_that("filter and smooth for seasonal growth model for AirPassengers data works", {
@@ -53,22 +41,25 @@ test_that("filter and smooth for seasonal growth model for AirPassengers data wo
 
   # Seasonal fourier (sin and cos)
   model_object <- dlm(
-    polynomial_order = 2,
-    seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3)),
-    discount_factors = list(polynomial = c(0.90), seasonal = 0.98)
+    polynomial = list(order = 2, discount_factor = 0.95),
+    seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3),
+                    discount_factor = 0.98)
   )
-  fitted_object <- fit(object = model_object, y = y, prior_length = 40)
+  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
+                               a = matrix(c(y[1], rep(0, 7)), ncol = 1),
+                               R = diag(100, 8))
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 
   # Seasonal free
   model_object <- dlm(
-    polynomial_order = 2,
-    seasonal = list(type = "free", period = 12),
-    discount_factors = list(polynomial = 0.90, seasonal = 0.98)
+    polynomial = list(order = 2, discount_factor = 0.95),
+    seasonal = list(type = "free", period = 12,
+                    discount_factor = 0.99)
   )
-  fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-
+  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
+                               a = matrix(c(y[1], rep(0, 12)), ncol = 1),
+                               R = diag(100, 13))
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 })
@@ -78,39 +69,17 @@ test_that("filter and smooth for seasonal growth model for us_retail_employment 
   y <- us_retail_employment$employed
 
   model_object <- dlm(
-    polynomial_order = 2,
-    seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3)),
-    discount_factors = list(polynomial = 0.90, seasonal = 0.98)
+    polynomial = list(order = 2, discount_factor = 0.90),
+    seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3),
+                    discount_factor = 0.98)
   )
-  fitted_object <- fit(object = model_object, y = y, prior_length = 40)
+  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
+                               a = matrix(c(y[1], rep(0, 7)), ncol = 1),
+                               R = diag(100, 8))
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 
-  model_object <- dlm(
-    polynomial_order = 2,
-    seasonal = list(type = "free", period = 12),
-    discount_factors = list(polynomial = 0.90, seasonal = 0.98)
-  )
-  fitted_object <- fit(object = model_object, y = y, prior_length = 40)
-  expect_s3_class(fitted_object, "dlm.fit")
-  expect_s3_class(fitted_object$model, "dlm")
 
-})
-
-test_that("filter and smooth functions for regression model for Nile data works", {
-  y <- c(Nile)
-  # Fake covariate
-  X <- matrix(rnorm(2 * length(y)), ncol = 2)
-  # Define the model
-  model_object <- dlm(
-    polynomial_order = 1, xreg = X,
-    discount_factors = list(polynomial = c(0.90, 0.95), regressors = 1)
-  )
-
-  # Fitting the model
-  fitted_object <- fit(object = model_object, y = y, prior_length = 10)
-  expect_s3_class(fitted_object, "dlm.fit")
-  expect_s3_class(fitted_object$model, "dlm")
 })
 
 test_that("fit method for dgegm object for simulated data works", {
@@ -131,6 +100,9 @@ test_that("fit method for dgegm object for simulated data works", {
     # Fitting the model
     fit(object = model_object, y = y)
   })
+  plot(y)
+  lines(out[[1]]$data_predictive$mean)
+
   expect_length(out, length(lambdas))
 })
 

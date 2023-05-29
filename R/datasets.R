@@ -9,6 +9,24 @@
 #' @source XXXX.
 "cp6"
 
+#' @name telephone_calls
+#' @title Telephone calls
+#' @description Telephone calls
+#' @format A \code{\link{data.frame}} with RR observations and CC columns.
+#' @author André Felipe Menezes
+#' @usage data(telephone_calls, package = "RBATS")
+#' @source XXXX.
+"telephone_calls"
+
+#' @name market_share
+#' @title Market share
+#' @description Market share
+#' @format A \code{\link{data.frame}} with RR observations and CC columns.
+#' @author André Felipe Menezes
+#' @usage data(market_share, package = "RBATS")
+#' @source XXXX.
+"market_share"
+
 #' @name us_retail_employment
 #' @title US monthly retail employment
 #' @description Data extract from \code{us_employment} of \pkg{fpp3} package.

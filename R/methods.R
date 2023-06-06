@@ -19,7 +19,7 @@ print.dlm <- function(x, ...) {
   cat(paste0("Call:\n", paste(deparse(x$call, width.cutoff = 80L), collapse = "\n")),
       "\n\n")
 
-  cat("Model specfication:\n")
+  cat("Model specification:\n")
   discount_factors <- 1/diag(x$D)
   comp_names <- x[["parameters_names"]]
   tab <- data.frame(parameter = comp_names,
@@ -58,7 +58,7 @@ print.dgegm <- function(x, ...) {
   cat(paste0("Call:\n", paste(deparse(x$call, width.cutoff = 80L), collapse = "\n")),
       "\n\n")
 
-  cat("Model specfication:\n")
+  cat("Model specification:\n")
   discount_factors <- 1/diag(x$D)
   comp_names <- x[["parameters_names"]]
   tab <- data.frame(parameter = comp_names,

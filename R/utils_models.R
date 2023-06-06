@@ -26,7 +26,7 @@
 .seasonal_free_model <- function(period, discount_factors = 0.98) {
 
   p <- as.integer(period) - 1L
-  comp_names <- paste0("seas_", seq_len(p))
+  comp_names <- paste0("period_", period, "__", "seas_", seq_len(p))
 
   FF <- matrix(c(1, rep(0, p - 1L)), ncol = 1)
   GG <- matrix(0, p, p)
@@ -50,7 +50,9 @@
   n <- 2*p
   i_min <- seq.int(1, by = 2, length.out = p)
   i_max <- seq.int(2, by = 2, length.out = p)
-  comp_names <- paste0(c("fourier_cos_", "fourier_sin_"), rep(harmonics, each = 2))
+  comp_names <- paste0(
+    "period_", period, "__",
+    c("fourier_cos_", "fourier_sin_"), rep(harmonics, each = 2))
 
   FF <- matrix(rep(c(1, 0), times = p))
   GG <- matrix(data = 0, nrow = n, ncol = n)
@@ -70,6 +72,16 @@
   rownames(FF) <- comp_names
 
   list(FF = FF, GG = GG, D = D)
+}
+
+.fourier_to_seasonal <- function(period, number_harmonics, FF, GG) {
+  # Section 8.6.5 WH, pag 254
+  L <- matrix(0, nrow = period, ncol = 2 * number_harmonics)
+  L[1L, ] <- FF
+  for (i in seq_len(period)[-1L]) {
+    L[i, ] <- L[i - 1, ] %*% GG
+  }
+  L
 }
 
 .regression_model <- function(X, discount_factors = 0.98) {

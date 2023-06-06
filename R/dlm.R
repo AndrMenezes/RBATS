@@ -47,10 +47,12 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   # Create model structure
   mod <- .polynomial_model(order = polynomial[["order"]],
                            discount_factors = polynomial[["discount_factor"]])
+  mod[["i_polynomial"]] <- 1:polynomial[["order"]]
 
   # Create model structure for seasonality
   seas_type <- match.arg(seasonal[["type"]], c("none", "free", "fourier"))
   if (seas_type != "none") {
+
     if (seas_type == "free") {
       mod_seas <- .seasonal_free_model(period = seasonal[["period"]],
                                        discount_factors = seasonal[["discount_factor"]])
@@ -59,11 +61,23 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
       mod_seas <- .seasonal_fourier_model(period = seasonal[["period"]],
                                           harmonics = seasonal[["harmonics"]],
                                           discount_factors = seasonal[["discount_factor"]])
+      # Seasonal effect from Fourier components
+      mod[["L"]] <- .fourier_to_seasonal(
+        period = seasonal[["period"]],
+        number_harmonics = length(seasonal[["harmonics"]]),
+        FF = mod_seas[["FF"]], GG = mod_seas[["GG"]]
+      )
     }
+
+    # Index of the seasonal components
+    mod[["i_seasonal"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + nrow(mod_seas[["FF"]]))
+
     # Superposition of models
     mod[["FF"]] <- rbind(mod[["FF"]], mod_seas[["FF"]])
     mod[["GG"]] <- .bdiag(mod[["GG"]], mod_seas[["GG"]])
     mod[["D"]] <- .bdiag_one(mod[["D"]], mod_seas[["D"]])
+
+
   }
 
   comp_names <- rownames(mod[["FF"]])
@@ -75,6 +89,8 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
     mod[["GG"]] <- .bdiag(mod[["GG"]], mod_reg[["GG"]])
     mod[["D"]] <- .bdiag_one(mod[["D"]], mod_reg[["D"]])
     comp_names <- c(comp_names, colnames(mod_reg[["GG"]]))
+    # Index of the regressor components
+    mod[["i_regressor"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + ncol(mod_reg[["xreg"]]))
   }
 
   colnames(mod[["GG"]]) <- rownames(mod[["GG"]]) <- comp_names

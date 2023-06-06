@@ -1,0 +1,639 @@
+---
+title: "Normal Dynamic Linear Models"
+author: "André F. B. Menezes"
+date: "Last compiled on `r format(Sys.time(), '%B %d, %Y')`"
+header-includes:
+    - \usepackage{setspace}
+    - \usepackage{float}
+    - \usepackage{geometry}
+    - \geometry{a4paper,nohead,left=2.0cm,right=2.0cm,bottom=2.5cm,top=2.5cm}
+    - \onehalfspacing
+fontsize: 12pt
+indent: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = "center",
+  fig.width = 13,
+  fig.height = 6.5)
+library(ggplot2)
+library(cowplot)
+theme_set(
+  theme_cowplot(font_size = 16, font_family = "Palatino") +
+    background_grid() +
+    theme(legend.position = "top")
+)
+```
+
+
+# Introduction
+
+This vignette will show examples of univariate Normal Dynamic Linear Models
+(DLMs) in real application using the `RBATS` package.
+
+
+```{r setup, message=FALSE}
+library(RBATS)
+```
+
+
+# Bayesian Normal Dynamic Linear Models
+
+Let the information set be represented as $D_t = \{D_0, \ldots, D_{t-1}\}$ at
+any time, with $D_0$ referring to the initial prior information at $t=0$.
+Assuming that $(\boldsymbol{\theta}_0 \mid D_0) \sim N[\mathbf{m}_0, \mathbf{C}_0]$,
+for some known moments $\mathbf{m}_0$ and $\mathbf{C}_0$, the general normal
+DLM is defined by:
+\begin{eqnarray}\label{eq:dlm_equations}
+Y_t &=& \mathbf{F}^\top_t\,\boldsymbol{\theta}_t + \nu_t, \quad \quad \nu_t \sim N[0, V_t]  \\
+\boldsymbol{\theta}_t &=& \mathbf{G}_t\,\boldsymbol{\theta}_{t-1} + \boldsymbol{\omega}_t, \quad \boldsymbol{\omega}_t \sim N[\mathbf{0}, \mathbf{W}_t]
+\end{eqnarray}
+where $Y_t$ is the observation at time $t$, $\mathbf{F}_t$ is a $p\times 1$ 
+regression vector with known constants at time $t$, $\nu_t$ is the observation
+error at time $t$, $\boldsymbol{\theta}_t$ is a $p\times 1$ state vector at 
+time $t$, $\boldsymbol{\omega}_t$ is the state evolution error, $\mathbf{G}_t$
+is a $p\times p$ known matrix describing the state evolution, $V_t$ is the 
+observation variance, and $\mathbf{W}_t$ is the evolution variance-covariance
+matrix. This model is describe by the quadruple 
+$\{\mathbf{F}_t, \mathbf{G}_t, V_t, \mathbf{W}_t\}$.
+
+Two major model types can be distinguished: time series models where 
+$\mathbf{F}_t=\mathbf{F}$ and $\mathbf{G}_t=\mathbf{G}$; and dynamic regression 
+models where $\mathbf{F}_t=(X_{t,1},\ldots,X_{t,p})'_t$ and 
+$\mathbf{G}=\mathbf{I}_p$, where $X_{t,i}$ denotes the $i$ covariate at time
+$t$ and $\mathbf{I}_p$ indicates the identity matrix of order $p$.
+
+## Model components
+
+DLMs are defined as the combination of simpler components based on the 
+superposition principle to make it simple to identify process features. The 
+superposition of $r \ge 1$ sub-models represented by
+$\{\mathbf{F}_i, \mathbf{G}_i, V_i, \mathbf{W}_i\}_t$, for $i=1, \cdots, r$, can be used to specify a 
+DLM. By defining $\mathbf{F}_t^{\prime}=(\mathbf{F}_1^{\prime}, \cdots, \mathbf{F}_r^{\prime}), \mathbf{G}_t=\textrm{diag}(\mathbf{G}_1, \cdots, \mathbf{G}_r)_t$ and $\mathbf{W}_t=(\mathbf{W}_1, \cdots, \mathbf{W}_r)_t$, we can obtain the model 
+described by the $r$ components.
+
+In fact, the current version of `RBATS` package implements three main model
+components: polynomial, seasonal and regressors. In the sequel, we will show
+how to define those models throughout the `dlm` function.
+
+### Nonstationary polynomial trend models
+
+These models are special case of time series model, where
+$\mathbf{F}_t=\mathbf{F}$ and $\mathbf{G}_t=\mathbf{G}$. The simplest model
+is the local level, where $\mathbf{F} = \mathbf{F} = 1$ and the scalar 
+vector $\theta_t$ represents the expected level of the series at time $t$, that is
+$$
+Y_t = \theta_t + \nu_t \quad \mathrm{and} \quad \theta_t = \theta_{t-1} + \omega_t.
+$$
+The class of second order polynomial models has $\mathbf{F} = (1, 0)^\top$ and
+$\mathbf{G} = \begin{pmatrix} 1 & 1 \\ 0 & 1 \end{pmatrix}$ and the 
+state vector $\boldsymbol{\theta}_t = (\mu_t, \beta_t)$ has two elements,
+the first representing the level and the second the growth.
+
+The general $p$-order polynomial models have a p-dimensional state vector,
+$\mathbf{F} = (1, 0, \ldots, 0)^\top$, and $\mathbf{G}$ matrix $p\times p$
+of Jordan form, where the diagonal and superdiagonal elements are all equal
+to one, that is
+$$
+\mathbf{G} = \begin{pmatrix}
+1 & 1 & 0 & \cdots & 0 \\
+0 & 1 & 1 & \cdots & 0 \\
+0 & 0 & 1 & \cdots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+0 & 0 & 0 & \cdots & 1
+\end{pmatrix}
+$$
+Then, the element $\theta_{t,r}$ in the state vector represents the $r$-th
+derivative or difference in the series trend at time $t$. It undergoes
+random fluctuations over time, influenced by the corresponding elements
+of the innovations vector $\boldsymbol{\omega}_t$.
+
+
+### Regressions 
+
+$\mathbf{F}_t=(X_{t,1},\ldots,X_{t,p})^\top$ and $\mathbf{G}=\mathbf{I}_p$,
+where $X_{t,i}$ denotes the $i$ covariate at time $t$ and $\mathbf{I}_p$
+indicates the identity matrix of order $p$.
+
+#### Autoregressions
+
+The basic representation of autoregression models of order $p$ in state space
+form consider $\mathbf{F}_t = (y_{t-1}, \ldots, y_{t-p})^\top$ and
+$\mathbf{G}=\mathbf{I}_p$.
+
+Although not available in the current version of the `RBATS` package another
+common representation has $\mathbf{F}_t = (1, 0, \ldots, 0)^\top$ and
+$$
+\mathbf{G} = \begin{pmatrix}
+\phi_1 & 1 & 0 & \ldots & 0 \\
+\phi_2 & 0 & 1 & \ldots & 0 \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\phi_{p-1} & 0 & 0 & \ldots & 1 \\
+\phi_{p} & 0 & 0 & \ldots & 0 \\
+\end{pmatrix}
+$$
+with $V_t = 0$ for all $t$ and $\mathbf{W}_t$ having zero entries except the
+$\mathbf{W}_{1,1} = w_t > 0$.
+
+
+### Seasonal
+
+Modelling seasonal patterns in time series requires a component form that is
+periodic. The simplest approach is the free form or the factor model, where a 
+different factor is defined for each point in a cycle. This approach is not
+parsimonious, which leads to the fourier form, where uses sines and cosines
+to describe the cyclical behaviour of the data.
+
+The current version of `RBATS` only supports one component of seasonality,
+that is, it is not possible to include multiple seasonality such as weekly and
+annual.
+
+#### Form free
+
+The form free approach to define a seasonal pattern of period $p$ has the
+following components
+
+$$
+\mathbf{F}=(1,0,\ldots,0)^\prime
+\quad \textrm{and} \quad
+\mathbf{G}=\left(\begin{matrix} \mathbf{0}  &  \mathbf{I}_{p-1}  \\ 1 &
+\mathbf{0}^\prime \end{matrix} \right).
+$$
+
+#### Fourier
+
+In the Fourier approach the seasonal component of period $p$ is define
+considering the $1, \ldots, m$ integer harmonics ($m < p$), where each one has
+the form
+$\mathbf{F}_j=(1, 0)^\top$ and
+$$\mathbf{G}_j = \left(\begin{matrix} \cos(\omega_j)  &  \sin(\omega_j)  \\ -\sin(\omega_j)&  \cos(\omega_j)\end{matrix} \right)$$
+for $j=1,\ldots, m$ and Fourier frequencies $\omega_j = 2\pi \, j / p$.
+
+Hence, the full seasonal Fourier block with period $p$ and $1, \ldots, m$
+harmonics is define as 
+$\mathbf{F}=(\mathbf{F}_1, \ldots, \mathbf{F}_j)'$ and
+$\mathbf{G} = \textrm{blockdiag}\left\{\mathbf{G}_1, \ldots, \mathbf{G}_{j}\right\}$
+
+
+## Sequential Inference
+
+One main feature of Bayesian DLMs is the sequential inference based on
+upon the Bayes' theorem. If the observation and evolution equation are known
+the results coincide with the Kalman filter. Because of that, the
+the sequential operation to obtain the prior, predictive and posterior
+distribution is known as forward filter. In `RBATS` the method `forward_filter`
+for objects of class `dlm` perform this operation sequentially on time,
+including the estimation of the variances, $V_t$ and $\mathbf{W}_t$.
+
+The results presented below, which assume that $V_t$ and $\mathbf{W}_t$ are
+known, are established in Chapter 4 of West and Harrison (1997).
+
+*Evolution -- prior distribution*
+
+\begin{equation*}
+\left(\boldsymbol{\theta}_t \mid D_{t-1}\right) \sim N[\mathbf{a}_t, \mathbf{R}_t]
+\end{equation*}
+with $\mathbf{a}_t = \mathbf{G}\,\mathbf{m}_{t-1}$ and 
+$\mathbf{R}_t=\mathbf{G}'\mathbf{C}_{t-1}\mathbf{G}_t + \mathbf{W}_t$.
+
+*Forecast -- predictive distribution*
+
+<!-- The one-step-ahead forecasting distribution can be obtained by integrating out -->
+<!-- $\boldsymbol{\theta}_t$ from the joint distribution of -->
+<!-- $y_t, \boldsymbol{\theta}_t$ given the -->
+<!-- past observations $D_{t-1}$. Consequently it follows that: -->
+\begin{equation*}
+\left(Y_{t} \mid D_{t-1}\right) \sim N[f_t, Q_t]
+\end{equation*}
+where $f_t = \mathbf{F}'_t\,\mathbf{a}_t$ and
+$Q_t=\mathbf{F}'_t\,\mathbf{R}_t\,\mathbf{F}_t + V_t$.
+
+
+*Updating -- posterior distribution*
+
+<!-- After observing $y_t$, using the prior distribution above and the normal -->
+<!-- likelihood, given $V_t$, we have: -->
+\begin{equation*}
+\left(\boldsymbol{\theta}_t \mid D_t\right) \sim N[\mathbf{m}_t, \mathbf{C}_t]
+\end{equation*}
+with $\mathbf{m}_t = \mathbf{a}_t + \mathrm{A}_t\,e_t$ and
+$\mathbf{C}_t = \mathbf{R}_t - \mathrm{A}_t\,\mathrm{A}'_t\,Q_t$, 
+where $\mathrm{A}_t=\mathbf{R}_t\,\mathbf{F}_t / Q_t$ and $e_t= y_t-f_t$.
+
+
+### Estimation of unknown time-varying observation variance
+
+In order to estimate the observation variance the normal-gamma distribution
+is used to obtain a conjugate analysis. Also, to introduce a dynamic in the
+observation variance we assume the following model for the $\phi_t = 1/V_t$,
+the observation precision
+\begin{eqnarray}
+\phi_t &=& \gamma_t\,\phi_{t-1} / \beta, \quad \textrm{with} \quad \gamma_t \sim \mathrm{Beta}[\beta n_{t-1} / 2, (1- \beta)\,n_{t-1}/2] \\
+(\phi_{0} \mid D_{0}) &\sim& \textrm{Gamma}(n_{0} / 2, d_{0} / 2)
+\end{eqnarray}
+where the preceding degrees of freedom ($n_0$) and the sum of squares ($d_0$),
+respectively are prior parameters that should be specified.
+
+The variance discount factor, $\beta \in (0, 1]$, enables the variance to
+evolve over time, and if it is equal to one, it leads to the constant variance
+model, $V_t = V$, for all $t$. Typically, $\beta$ values are between 0.95 and
+0.99 (see Chapter 10 of West and Harrison (1997)).
+
+Unconditional to $V_t$, all of the previously presented distributions transform
+into t-Student distributions (see Chapter 10 of West and Harrison (1997)).
+
+### Specification of evolution variance matrix
+
+To maintain the sequential inference feature, $\mathbf{W}_t$ is specified using
+the **discount factor** technique. A single discount factor denoted by
+$\delta \in (0,1]$ is a multiplicative factor useful to
+**increase the uncertainty** in the evolution step of the sequential inference in DLMs.
+
+Note that the prior variance is defined as $\mathbf{R}_t = \mathbf{G}_t^{\prime}\mathbf{C}_{t-1}\mathbf{G}_t + \mathbf{W}_{t} = \mathbf{P}_{t} + \mathbf{W}_{t}$
+, where $\mathbf{P}_{t} = \mathbf{G}_t^{\prime}\mathbf{C}_{t-1}\mathbf{G}_t$.
+For the static model $\mathbf{W}_t = 0$, so that $\mathbf{R}_t = \mathbf{G}_t^{\prime}\mathbf{C}_{t-1}\mathbf{G}_t$.
+On the other hand, if the model is dynamic the precision $\mathbf{R}_t^{-1}$ is
+reduced relative to the posterior at time $t-1$, i.e., $\mathbf{P}_{t}^{-1}$.
+Then the intuitive way to express this relation is by
+
+$$\mathbf{R}^{-1}_t = \delta \mathbf{P}_{t}^{-1} \rightarrow \mathbf{R}_t = \delta^{-1} \mathbf{P}_{t}$$
+where $\delta \in (0, 1]$ is a discount factor. This implies that the system
+variance can be specified as
+
+$$\mathbf{W}_t = \dfrac{1-\delta}{\delta}\,\mathbf{P}_{t} = \dfrac{1-\delta}{\delta}\,\mathbf{G}_t^{\prime}\mathbf{C}_{t-1}\mathbf{G}_t.$$
+
+In practice, a single discount factor is usually not appropriate, so different
+discounts are used for each model component. That is, the evolution matrices,
+$\mathbf{W}_{it}$, are determined by $\mathbf{W}_{it}= (1/\delta_i - 1) \, \mathbf{P}_{it}$, where
+$\delta_i$ is the discount factor for the $i$-th component, for $i=1, \ldots, r$.
+In addition, $\delta_i$ lies in $(0, 1]$ and its typical range for practical
+analysis is $[0.9, 0.99]$. Clearly, if $\delta_i = 1$, then $\mathbf{W}_{it} = 0$ which
+leads to the static model for the component $i$. Conversely, if
+$\delta_i \approx 0$ the elements of $\mathbf{W}_{it}$ will be very large, resulting in
+an unstable model component.
+
+The automatic monitoring method also available in RBATS throughout the `dlm`
+object is closely related to the specification of discount factor values.
+In particular, model adaptation is carried out by raising the uncertainty of the
+state parameters when a model breakdown is observed. We will discuss this below.
+
+
+### Smoothing distribution
+
+Let be $T$ the most recent observed time, the operation backward smoothing looks
+back to time and revise the filtering distribution by using all available
+information until time $T$, i.e., $D_{T}$. This is implemented in the method
+`backward_smoother`.
+
+The smoothed distribution for the state parameters are defined by
+\begin{eqnarray}
+(\boldsymbol{\theta}_t \mid D_T) \sim N [\mathbf{a}_T(t), \mathbf{R}_T(t)]
+\end{eqnarray}
+where
+$\mathbf{a}_T(t) = \mathbf{m}_t + \mathbf{B}_t [\mathbf{a}_T(t+1) - \mathbf{a}_{t+1}]$,
+$\mathbf{R}_T(t) = \mathbf{C}_t + \mathbf{B}_t [ \mathbf{R}_T(t) - \mathbf{R}_{t+1}] \mathbf{B}'_t$ and
+$\mathbf{B}_t = \mathbf{C}_t \mathbf{G}'_{t+1} \mathbf{R}^{-1}_{t+1}$,
+with starting values $\mathbf{a}_T(0) = \mathbf{m}_T$ and $\mathbf{R}_T(0) = \mathbf{C}_T$ (see West and Harrison (1997), Sec. 4.7). 
+
+The corresponding smoothed distribution for the mean response of the series is
+given by
+\begin{eqnarray*}
+    (\mu_{t} \mid D_T) \sim N[f_T(t), Q_T(t)]    
+\end{eqnarray*}
+where $f_T(t) = \mathbf{F}'_t \mathbf{a}_T(t)$ and
+$Q_T(t) = \mathbf{F}'_t \mathbf{R}_T(t) \mathbf{F}_t$.
+
+## Automatic Monitoring
+
+The sequential analysis of DLMs offers great flexibility in continuously
+evaluating the predictive performance of the current model and adapting it if 
+potential model failures are detected. The general Bayesian automatic model 
+monitoring and adaptation method was developed by \cite{West1986b} and 
+extended to a broad class of dynamic models by \cite{West1986}. This technique
+considers purely statistical measures of model performance, based on the 
+concept of the local Bayes factor, and it involves the following main steps: 
+
+1. Propose an alternative DLM $(M_1)$ describing a level and/or scale shift; 
+
+2. Compute the Bayes factor, $H_t$ and update the cumulative Bayes factor $L_t$ and run-length $l_t$;
+
+3. Check if the measures indicates potential model breakdown deviates;
+
+4. If so, performs automatic interventions in order to model adapts itself.
+
+
+
+# Examples
+
+## Flow of the River Nile
+
+To analyse this data set we will consider the local level model and compare
+the results with the `StructTS` function included in the `stats` package.
+The `StructTS` function is simple to use and performs the maximum likelihood
+estimation to obtain the observation and evolution variance, which are 
+assumed to be constant in time. However, this function does not provide
+standard errors of the estimates, which are required to compute the 
+prediction interval.
+
+```{r StructTS-nile}
+fit_Nile <- StructTS(Nile, "level")
+fit_Nile
+```
+
+
+We can obtain the posterior level (filtered) component with the `fitted` function and the
+smoothing level using the `tsSmooth`, both methods should be applied to the
+`fit_Nile` object. We will keep those information in a `data.frame` to compare
+with the results from `RBATS`.
+```{r organize-nile-data}
+data_Nile <- data.frame(
+  t = seq_along(Nile),
+  time = seq.Date(as.Date("1871-01-01"), as.Date("1970-01-01"), by = "year"),
+  y = c(Nile),
+  filtered__StructTS = c(fitted(fit_Nile)),
+  smoothed__StructTS = c(tsSmooth(fit_Nile))
+)
+```
+
+The local level model in `RBATS` is defined considering the polynomial argument
+in `dlm` with `order = 1`. Also, I will consider a discount factor of `0.80`
+for the level and equal one for the variance, meaning that the observation
+variance is constant at time. The `fit` method for the `dlm` object performs
+the filtering and smoothing using the sequential Bayesian inference describe
+above. Under the Bayes approach we need to specify prior moments for the 
+level component. In this case, a vague prior with mean $1000$ and variance
+$1000$ is specified.
+
+```{r fit-nile-rbats}
+model <- dlm(polynomial = list(order = 1, discount_factor = 0.80),
+             df_variance = 1)
+fit_model <- fit(model = model, y = c(Nile), a = matrix(1000, ncol = 1),
+                 R = diag(1000, 1))
+fit_model
+```
+
+```{r ploting}
+data_Nile$filtered__RBATS <- fit_model$filtered$m[1, ]
+data_Nile$smoothed__RBATS <- fit_model$smoothed$ak[1, ]
+data_Nile_pivotted <- tidyr::pivot_longer(data_Nile, cols = -c(t, time, y)) |> 
+  tidyr::separate(col = "name", into = c("distribution", "package"))
+ggplot(data_Nile_pivotted, aes(x = time, y = y)) +
+  facet_wrap(~distribution, ncol = 1) +
+  geom_point(size = 1.5) +
+  geom_line(aes(y = value, col = package), linewidth = 1) +
+  labs(x = "Year", y = "Flow of the Nile river", col = "")
+```
+
+In fact, the Bayesian approach provides not only a point estimate, but a entire
+predictive or smoothed distribution. We can explore this by using the method
+`extract` applied to the `dlm.fit` objects.
+
+```{r extract-nile}
+data_predictive <- extract(x = fit_model, prob_interval = c(0.05, 0.20),
+                           distribution = "filter", component = "response")
+dplyr::glimpse(data_predictive)
+data_predictive$time <- seq.Date(as.Date("1871-01-01"), as.Date("1970-01-01"),
+                                 by = "year")
+ggplot(data_predictive, aes(x = time, y = y)) +
+  geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95), 
+              fill = "blue", alpha = 0.2) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80), 
+              fill = "blue", alpha = 0.1) +
+  geom_point(size = 1.5) +
+  geom_line(aes(y = mean), col = "blue") +
+  labs(x = "Year", y = "Flow of river")
+
+```
+
+
+## Telephone calls
+
+The telephone call dataset concerns the monthly average number of phone calls
+in Cincinnati, USA. This dataset has three changes of regime. The first was in
+early 1968, with impact lasting three months; the second was in the middle of
+1973, less significant; and the third was in early 1974, more lasting.
+
+
+
+```{r StructTS-telephone, include=FALSE}
+data("telephone_calls")
+fit_telephone <- StructTS(telephone_calls$average_daily_calls, "trend")
+fit_telephone
+plot(telephone_calls$average_daily_calls)
+lines(fitted(fit_telephone)[, 1], col = "blue")
+```
+
+Because of that we will consider the local linear growth model using the automatic 
+monitoring method, which aims to detect those regime change and perform
+adaptation. The local linear growth is defined using considering the polynomial
+order two. Also, we define another object where we specify the operational 
+parameters regarding the monitoring method. Note that, when the monitor detects
+any change the discount factor of the level will decrease from $0.90$ to $0.20$,
+leading to more uncertainty on the level component and consequently a quick
+adaptation in case of changes.
+
+```{r fit-telephone}
+model <- dlm(polynomial = list(order = 2, discount_factor = c(0.90, 0.95)),
+             df_variance = 1)
+fit_model <- fit(model = model, y = c(telephone_calls$average_daily_calls),
+                 a = matrix(c(300, 0), ncol = 1),
+                 R = diag(1000, 2))
+model_monitor <- dlm(polynomial = list(order = 2, discount_factor = 0.90),
+                     df_variance = 1,
+                     monitor = list(
+                       execute = TRUE, verbose = TRUE, start_time = 40L,
+                       bilateral = TRUE,
+                       bf_threshold = 0.135,
+                       location_shift = 4, scale_shift = 1,
+                       discount_factors = list(polynomial = c(0.2, 0.95))))
+fit_model_monitor <- fit(model = model_monitor,
+                         y = c(telephone_calls$average_daily_calls),
+                         a = matrix(c(300, 0), ncol = 1),
+                         R = diag(1000, 2))
+```
+
+
+After the fitting, for comparison purposes we extract the predictive
+distribution and plot both with and without the monitor in the plot below.
+```{r extract-telephone-predictive}
+data_predictive <- extract(x = fit_model, prob_interval = c(0.05, 0.20),
+                           distribution = "filter", component = "response")
+data_predictive$time <- as.Date(telephone_calls$time)
+data_predictive$monitor <- FALSE
+data_predictive_monitor <- extract(x = fit_model_monitor,
+                                   prob_interval = c(0.05, 0.20),
+                                   distribution = "filter",
+                                   component = "response")
+data_predictive_monitor$time <- as.Date(telephone_calls$time)
+data_predictive_monitor$monitor <- TRUE
+data_predictive <- rbind(data_predictive, data_predictive_monitor)
+
+ggplot(data_predictive[data_predictive$t > 5, ], aes(x = time, y = y)) +
+  geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95, fill = monitor), 
+              alpha = 0.2) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80, fill = monitor), 
+              alpha = 0.1) +
+  geom_point(size = 1.2) +
+  geom_line(aes(y = mean, col = monitor)) +
+  labs(x = "Year/Month", y = "Average daily calls")
+```
+
+In the next plot we compare the smooth level.
+```{r extract-telephone-smooth}
+data_state <- extract(x = fit_model, prob_interval = c(0.05, 0.20),
+                      distribution = "smooth", component = "state")
+data_state$time <- rep(as.Date(telephone_calls$time), times = 2)
+data_state$monitor <- FALSE
+
+data_state_monitor <- extract(x = fit_model_monitor,
+                              prob_interval = c(0.05, 0.20),
+                              distribution = "smooth", component = "state")
+data_state_monitor$time <- rep(as.Date(telephone_calls$time), times = 2)
+data_state_monitor$monitor <- TRUE
+
+data_state <- rbind(data_state, data_state_monitor)
+
+ggplot(data_state[data_state$parameter == "level", ],
+       aes(x = time, y = y)) +
+  geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95, fill = monitor),
+              alpha = 0.2) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80, fill = monitor), 
+              alpha = 0.1) +
+  geom_point(size = 1.2) +
+  geom_line(aes(y = mean, col = monitor)) +
+  labs(x = "Year/Month", y = "Average daily calls")
+```
+
+## Monthly Airline Passenger Numbers
+
+This example illustrates the use of a Fourier seasonal component. 
+
+```{r}
+model <- dlm(polynomial = list(order = 2, discount_factor = 0.95),
+             seasonal = list(type = "fourier", period = 12,
+                             harmonics = 1:2, discount_factor = 0.98))
+fit_model <- fit(model = model, y = c(AirPassengers),
+                 a = matrix(c(110, rep(0, 5)), ncol = 1),
+                 R = diag(1000, 6))
+```
+
+```{r extract-air-passengers}
+data_predictive <- extract(x = fit_model, prob_interval = c(0.05, 0.20),
+                           distribution = "filter", component = "response")
+data_predictive$time <- seq.Date(as.Date("1949-01-01"), as.Date("1960-12-01"),
+                                 by = "month")
+
+ggplot(data_predictive[data_predictive$t > 5, ], aes(x = time, y = y)) +
+  geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95), fill = "blue",
+              alpha = 0.2) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80), fill = "blue", 
+              alpha = 0.1) +
+  geom_point(size = 1.2) +
+  geom_line(aes(y = mean), col = "blue") +
+  labs(x = "Year/Month", y = "Airline passenger numbers")
+```
+
+```{r extract-state-air-passengers}
+data_state <- extract(x = fit_model, prob_interval = c(0.05, 0.20),
+                      distribution = "smooth", component = "state")
+data_state$time <- rep(
+  seq.Date(as.Date("1949-01-01"), as.Date("1960-12-01"), by = "month"),
+  times = nrow(model$FF) + 1)
+
+chosen_states <- c("level", "growth", "sum_seasonality")
+chosen_rows <- (data_state$parameter %in% chosen_states) & (data_state$t > 5)
+ggplot(data_state[chosen_rows, ], aes(x = time, y = mean)) +
+  facet_wrap(~parameter, ncol = 1, scales = "free") +
+  geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95), fill = "blue",
+              alpha = 0.2) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80), fill = "blue", 
+              alpha = 0.1) +
+  geom_line(col = "blue") +
+  labs(x = "Year/Month", y = "State")
+```
+
+
+## Daily electricity demand of Victoria, Australia
+
+This example illustrates the use of regressors in DLMs. We will model the 
+daily electricity demand as a function of the maximum temperature and 
+dummy variables defining the type of the day, if it is holiday, weekday, or
+weekend.
+
+```{r electricity-data}
+data("vic_electricity_daily")
+X <- model.matrix(~ max_temperature + day_type, data = vic_electricity_daily)
+X <- X[, -1, drop = FALSE]
+X[, 1] <- (X[, 1] - mean(X[, 1])) / sd(X[, 1])
+head(X)
+```
+
+
+This example shows how to the define the most complete DLM available in `RBATS`.
+The model has three components.
+
+1. The level growth model: 
+```
+polynomial = list(order = 2, discount_factor = 0.95)
+```
+
+2. The weekly seasonality represented by Fourier form with three first harmonics:
+```
+seasonal = list(type = "fourier", period = 7, harmonics = 1:3, discount_factor = 0.98)
+```
+
+3. The regressor component, with 3 covariates:
+```
+regressor = list(xreg = X, discount_factor = 0.99)
+```
+
+The state parameter $\boldsymbol{\theta}$ has dimension $11$. The first $2$
+components are level and growth, the following $6$ are the harmonics from the
+weekly seasonality and the last $3$ denotes the regression coefficients for
+the maximum temperature, dummy for weekday and dummy for weekend, respectively.
+
+```{r dlm-electricity}
+model <- dlm(polynomial = list(order = 2, discount_factor = 0.95),
+             seasonal = list(type = "fourier", period = 7,
+                             harmonics = 1:3, discount_factor = 0.99),
+             regressor = list(xreg = X, discount_factor = 0.99))
+fit_model <- fit(model = model, y = vic_electricity_daily$demand,
+                 a = matrix(c(175, rep(0, 10)), ncol = 1),
+                 R = diag(1000, 11), smooth = TRUE)
+```
+
+The predictive distribution is shown below
+```{r predictive-elec}
+data_predictive <- extract(x = fit_model, prob_interval = 0.20,
+                           distribution = "filter", component = "response")
+data_predictive$time <- vic_electricity_daily$time
+
+ggplot(data_predictive[data_predictive$t > 2*11, ], aes(x = time, y = y)) +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80), fill = "blue", 
+              alpha = 0.1) +
+  geom_point(size = 1.2) +
+  geom_line(aes(y = mean), col = "blue") +
+  scale_x_date(breaks = scales::pretty_breaks(8)) +
+  labs(x = "Day", y = "Daily electricity demand")
+```
+
+We can inspect the state parameters of the model.
+```{r extract-state-elect}
+data_state <- extract(x = fit_model, prob_interval = 0.20,
+                      distribution = "smooth", component = "state")
+data_state$time <- rep(vic_electricity_daily$demand,
+                       times = nrow(model$GG) + 1)
+
+chosen_states <- c("level", "growth", "max_temperature", "sum_seasonality")
+chosen_rows <- (data_state$parameter %in% chosen_states) & (data_state$t > 22)
+ggplot(data_state[chosen_rows, ], aes(x = time, y = mean)) +
+  facet_wrap(~parameter, ncol = 1, scales = "free") +
+  geom_ribbon(aes(ymin = ci_lower__80, ymax = ci_upper__80), fill = "blue", 
+              alpha = 0.1) +
+  geom_line(col = "blue") +
+  labs(x = "Day", y = "State")
+```
+

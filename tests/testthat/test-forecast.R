@@ -3,16 +3,17 @@ test_that("forecast method works for level and growth models", {
   y <- c(Nile)
   # Define the model
   model_object <- dlm(
-    polynomial_order = 2,
-    discount_factors = list(polynomial = 0.9),
-    variance_law = list(type = "power", power = 1/2)
+    polynomial = list(order = 2, discount_factor = 0.90), df_variance = 0.8
   )
   # Fitting the model
-  fitted_model <- fit(object = model_object, y = y, prior_length = 10)
+  fitted_model <- fit(model = model_object, y = y,
+                      a = matrix(c(1010, 0), ncol = 1),
+                      R = diag(1000, 2))
   model_object <- fitted_model$model
   # Forecasting
   fcast_pred <- forecast(model_object, horizon = 10)
   fcast_pred_parms <- forecast(model_object, horizon = 10, state_parameters = TRUE)
+  fcast_pred_parms$state_parameters
 
   expect_s3_class(fcast_pred$predictive, "data.frame")
   expect_null(fcast_pred$state_parameters)

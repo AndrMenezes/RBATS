@@ -7,7 +7,7 @@
 #' @param xreg matrix. Future values of possible regressors.
 #' @param horizon integer. Forecast horizon.
 #' @param interval logical. Should exact credible interval be returned?
-#' @param level numeric. The probability level of the credible interval.
+#' @param prob_interval numeric. The probability level of the credible interval.
 #' @param state_parameters logical. Should returned the future prior moments of state
 #' parameters? Default is \code{FALSE}.
 #' @param ... currently not used.
@@ -47,10 +47,11 @@ forecast_aR <- function(object, horizon, ...){
 #' @rdname forecast.dlm
 #' @export
 forecast.dlm <- function(object, horizon, xreg = NULL, interval = TRUE,
-                         level = 0.10, state_parameters = FALSE, ...) {
+                         prob_interval = 0.10, state_parameters = FALSE, ...) {
 
   max_time_index <- object[["time"]]
-  time_index_future <- seq.int(max_time_index + 1, by = 1, length.out = horizon)
+  time_index_future <- seq.int(max_time_index + 1, by = 1,
+                               length.out = horizon)
 
   if (!is.null(xreg)) {
     if (is.null(colnames(xreg)))
@@ -90,14 +91,14 @@ forecast.dlm <- function(object, horizon, xreg = NULL, interval = TRUE,
 
   if (interval) {
     data_predictive$ci_lower <- data_predictive$mean + (
-      qt(level / 2, df = data_predictive$df) * sqrt(data_predictive$variance))
+      qt(prob_interval / 2, df = data_predictive$df) * sqrt(data_predictive$variance))
     data_predictive$ci_upper <- data_predictive$mean + (
-      qt(1 - level / 2, df = data_predictive$df) * sqrt(data_predictive$variance))
+      qt(1 - prob_interval / 2, df = data_predictive$df) * sqrt(data_predictive$variance))
     if (state_parameters) {
       data_state_parameters$ci_lower <- data_state_parameters$mean + (
-        qt(level / 2, df = data_state_parameters$df) * sqrt(data_state_parameters$variance))
+        qt(prob_interval / 2, df = data_state_parameters$df) * sqrt(data_state_parameters$variance))
       data_state_parameters$ci_upper <- data_state_parameters$mean + (
-        qt(1 - level / 2, df = data_state_parameters$df) * sqrt(data_state_parameters$variance))
+        qt(1 - prob_interval / 2, df = data_state_parameters$df) * sqrt(data_state_parameters$variance))
     }
   }
 
@@ -124,7 +125,7 @@ forecast_marginal.dlm <- function(object, horizon, xreg = NULL, ...) {
   nt <- object[["prior"]][["n"]]
 
   # Forecast prior mean (a) and variance (R)
-  prior_parms <- forecast_aR.dlm(object = object, horizon = horizon)
+  prior_parms <- forecast_aR(object = object, horizon = horizon)
   a_h <- prior_parms[["a_h"]]
   R_h <- prior_parms[["R_h"]]
 

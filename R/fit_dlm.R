@@ -45,12 +45,12 @@ backward_smoother <- function(model, filtering_parameters, ...) {
 fit.dlm <- function(model, y, a, R, n = 1, s = 1, smooth = TRUE, ...) {
 
   filtered <- forward_filter.dlm(model = model, y = y,
-                                     a = a, R = R, n = n, s = s)
+                                 a = a, R = R, n = n, s = s)
   # Perform the smoothing
   smoothed <- NULL
   if (smooth) {
     smoothed <- backward_smoother.dlm(model = model,
-                                          filtering_parameters = filtered)
+                                      filtering_parameters = filtered)
   }
 
   # Update the model object
@@ -64,9 +64,11 @@ fit.dlm <- function(model, y, a, R, n = 1, s = 1, smooth = TRUE, ...) {
                                n = filtered[["n"]][t_end],
                                s = filtered[["s"]][t_end])
   model["loglik"] <- filtered[["loglik"]]
+  model["time"] <- t_end
 
   # Return an object of class fit.dlm
-  structure(list(model = model, filtered = filtered, smoothed = smoothed,
+  structure(list(model = model, y = y,
+                 filtered = filtered, smoothed = smoothed,
                  call = match.call()),
             class = "dlm.fit")
 
@@ -77,7 +79,7 @@ fit.dlm <- function(model, y, a, R, n = 1, s = 1, smooth = TRUE, ...) {
 #' @export
 forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
 
-  if (is.null(model[["X"]])) {
+  if (is.null(model[["xreg"]])) {
     # Check if it is to perform the monitor
     if (is.null(model[["monitor"]])) {
       out <- forward_filter_dlm(y = y, F = model[["FF"]], G = model[["GG"]],
@@ -125,7 +127,8 @@ forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
   } else {
 
     if (is.null(model[["monitor"]])) {
-      out <- forward_filter_dlm_X(y = y, F = model[["FF"]], X = t(model[["X"]]),
+      out <- forward_filter_dlm_X(y = y, F = model[["FF"]],
+                                  X = t(model[["xreg"]]),
                                   G = model[["GG"]], D = model[["D"]],
                                   a = a, R = R, n = n, s = s,
                                   df_variance = model[["df_variance"]])
@@ -136,7 +139,7 @@ forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
         out <- forward_filter_dlm_monitor_bilateral_X(
           y = y,
           F = model[["FF"]],
-          X = t(model[["X"]]),
+          X = t(model[["xreg"]]),
           G = model[["GG"]],
           D = model[["D"]],
           a = a,
@@ -155,7 +158,7 @@ forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
         out <- forward_filter_dlm_monitor_X(
           y = y,
           F = model[["FF"]],
-          X = t(model[["X"]]),
+          X = t(model[["xreg"]]),
           G = model[["GG"]],
           D = model[["D"]],
           a = a,
@@ -174,6 +177,37 @@ forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
     }
   }
 
+  # Print where the monitor detect something
+  if (!is.null(model[["monitor"]])) {
+    if (model[["monitor"]][["verbose"]]) {
+      detections <- out[["detections"]][, 1L]
+      times_detected <- which(detections != 0)
+
+      if (model[["monitor"]][["bilateral"]]) {
+        for (i in times_detected) {
+          Ht <- c(out[["H_lower"]][i, 1L], out[["H_upper"]][i, 1L])
+          Lt <- c(out[["L_lower"]][i, 1L], out[["L_upper"]][i, 1L])
+          lt <- c(out[["l_lower"]][i, 1L], out[["l_upper"]][i, 1L])
+          side <- which.min(Ht)
+          side_msg <- if (side == 1) "Lower" else "Upper"
+          type <- if (detections[i] == 2) "Potential outlier" else "Parametric change"
+          msg <- "%s %s detected at time %i with H=%.4e, L=%.4e and l=%i"
+          cat(sprintf(msg, side_msg, type, i,
+                      Ht[side], Lt[side], lt[side]), "\n")
+        }
+
+      }
+      else {
+        for (i in times_detected) {
+          type <- if (detections[i] == 2) "Potential outlier" else "Parametric change"
+          msg <- "%s detected at time %i with H=%.4e, L=%.4e and l=%i"
+          cat(sprintf(msg, type, i, out[["H"]][i, 1L], out[["L"]][i, 1L],
+                      out[["l"]][i, 1L]), "\n")
+        }
+      }
+    }
+  }
+
   structure(out, class = "dlm.forward_filter")
 }
 
@@ -181,7 +215,7 @@ forward_filter.dlm <- function(model, y, a, R, n = 1, s = 1, ...) {
 #' @export
 backward_smoother.dlm <- function(model, filtering_parameters, ...) {
 
-  if (is.null(model[["X"]])) {
+  if (is.null(model[["xreg"]])) {
     out <- backward_smoother_dlm(F = model[["FF"]], G = model[["GG"]],
                                  m_seq = filtering_parameters[["m"]],
                                  a_seq = filtering_parameters[["a"]],
@@ -189,7 +223,7 @@ backward_smoother.dlm <- function(model, filtering_parameters, ...) {
                                  R_seq = filtering_parameters[["R"]])
   } else {
     out <- backward_smoother_dlm_X(F = model[["FF"]], G = model[["GG"]],
-                                   X = t(model[["X"]]),
+                                   X = t(model[["xreg"]]),
                                    m_seq = filtering_parameters[["m"]],
                                    a_seq = filtering_parameters[["a"]],
                                    C_seq = filtering_parameters[["C"]],

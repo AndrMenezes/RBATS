@@ -39,10 +39,11 @@ Rcpp::List update_dlm(const double y,
   // Evolution step: priors for time t + 1 from the posteriors m, C
   a = G * m;
   R = G * C * G.t();
+  // Make sure the covariance matrix is symmetric
+  R = (R + R.t()) / 2;
 
   // Discount information
   R = D % R;
-
 
   return(Rcpp::List::create(
       Rcpp::Named("f")=f,
@@ -189,7 +190,6 @@ double bayes_factor(double x, double mu, double tau){
   return(
     R::dnorm(x, 0, 1, FALSE) / R::dnorm(x, mu, tau, FALSE)
   );
-
   // return(
   //   tau * std::exp(
   //     (std::pow((e - mu), 2) - std::pow(tau, 2) * std::pow(e, 2)) / (2 * std::pow(tau, 2))
@@ -231,13 +231,13 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
   arma::vec L_seq(k, arma::fill::zeros);
   arma::vec l_seq(k, arma::fill::zeros);
   arma::vec lpl_seq(k, arma::fill::zeros);
+  arma::vec detections(k, arma::fill::zeros);
 
   // Keep the first prior
   a_seq.col(0) = a;
   R_seq.slice(0) = R;
   s_seq(0) = s;
   n_seq(0) = n;
-
 
   // Initialize the predictive
   double f = arma::as_scalar(F.t() * a);
@@ -345,10 +345,11 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
     if ((Ht >= bf_threshold) & ((Lt < bf_threshold) | (lt > 2))){
       // Get back at time t - lt - 1 and increase the prior, R.
       int index = t - lt + 1;
+      detections(t) = 1;
 
-      if (verbose) {
-        std::cout << "Parametric change at time " << index << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << "Parametric change at time " << index << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
+      // }
       R_seq.slice(index) = R_seq.slice(index) % exception_D;
       for (int i = index; i < t; i++) {
         Rcpp::List tmp = update_dlm(y[i], F, G, D, a_seq.col(i), R_seq.slice(i),
@@ -368,9 +369,10 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
     }
 
     if (Ht < bf_threshold) {
-      if (verbose) {
-        std::cout << "Potential outlier at time " << t + 1 << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << "Potential outlier at time " << t + 1 << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
+      // }
+      detections(t) = 2;
       potential_outlier = TRUE;
       y_curr = NA_REAL;
       Lt = 1;
@@ -414,7 +416,8 @@ Rcpp::List forward_filter_dlm_monitor(arma::vec const y,
       Rcpp::Named("H")=H_seq,
       Rcpp::Named("L")=L_seq,
       Rcpp::Named("l")=l_seq,
-      Rcpp::Named("loglik")=lpl));
+      Rcpp::Named("loglik")=lpl,
+      Rcpp::Named("detections")=detections));
 
 }
 
@@ -454,6 +457,7 @@ Rcpp::List forward_filter_dlm_monitor_X(arma::vec const y,
   arma::vec L_seq(k, arma::fill::zeros);
   arma::vec l_seq(k, arma::fill::zeros);
   arma::vec lpl_seq(k, arma::fill::zeros);
+  arma::vec detections(k, arma::fill::zeros);
 
   // Keep the first prior
   a_seq.col(0) = a;
@@ -571,10 +575,11 @@ Rcpp::List forward_filter_dlm_monitor_X(arma::vec const y,
     if ((Ht >= bf_threshold) & ((Lt < bf_threshold) | (lt > 2))){
       // Get back at time t - lt - 1 and increase the prior, R.
       int index = t - lt + 1;
+      detections(t) = 1;
 
-      if (verbose) {
-        std::cout << "Parametric change at time " << index << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << "Parametric change at time " << index << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
+      // }
       R_seq.slice(index) = R_seq.slice(index) % exception_D;
       for (int i = index; i < t; i++) {
         Rcpp::List tmp = update_dlm(y[i], arma::join_cols(F, X.col(i)), G, D,
@@ -595,9 +600,10 @@ Rcpp::List forward_filter_dlm_monitor_X(arma::vec const y,
     }
 
     if (Ht < bf_threshold) {
-      if (verbose) {
-        std::cout << "Potential outlier at time " << t + 1 << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << "Potential outlier at time " << t + 1 << " with: " << " H: " << Ht << " L: " << Lt <<  " l: " << lt << "\n";
+      // }
+      detections(t) = 2;
       potential_outlier = TRUE;
       y_curr = NA_REAL;
       Lt = 1;
@@ -640,7 +646,8 @@ Rcpp::List forward_filter_dlm_monitor_X(arma::vec const y,
       Rcpp::Named("H")=H_seq,
       Rcpp::Named("L")=L_seq,
       Rcpp::Named("l")=l_seq,
-      Rcpp::Named("loglik")=lpl));
+      Rcpp::Named("loglik")=lpl,
+      Rcpp::Named("detections")=detections));
 
 }
 
@@ -682,6 +689,7 @@ Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y,
   arma::vec l_upper_seq(k, arma::fill::zeros);
   arma::vec l_lower_seq(k, arma::fill::zeros);
   arma::vec lpl_seq(k, arma::fill::zeros);
+  arma::vec detections(k, arma::fill::zeros);
 
   //
   a_seq.col(0) = a;
@@ -831,6 +839,7 @@ Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y,
     if ((min_Ht >= bf_threshold) & ((min_Lt < bf_threshold) | (max_lt > 2))){
       // Get back at time t - lt + 1 and increase the prior, R.
       int index = t - max_lt + 1;
+      detections(t) = 1;
 
       // Re-setting the values of cumulative BF and run-length
       if (Lt_upper < Lt_lower) {
@@ -843,9 +852,9 @@ Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y,
         side = "Lower";
       }
 
-      if (verbose) {
-        std::cout << side << " Parametric change at time " << index << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << side << " Parametric change at time " << index << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
+      // }
       R_seq.slice(index) = R_seq.slice(index) % exception_D;
       for (int i = index; i < t; i++) {
         Rcpp::List tmp = update_dlm(y[i], F, G, D, a_seq.col(i), R_seq.slice(i),
@@ -873,9 +882,10 @@ Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y,
         lt_lower = 0;
         side = "Lower";
       }
-      if (verbose) {
-        std::cout << side << " Potential outlier at time " << t + 1 << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << side << " Potential outlier at time " << t + 1 << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
+      // }
+      detections(t) = 2;
       potential_outlier = TRUE;
       y_curr = NA_REAL;
     }
@@ -920,7 +930,8 @@ Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y,
       Rcpp::Named("L_lower")=L_lower_seq,
       Rcpp::Named("l_upper")=l_upper_seq,
       Rcpp::Named("l_lower")=l_lower_seq,
-      Rcpp::Named("loglik")=lpl));
+      Rcpp::Named("loglik")=lpl,
+      Rcpp::Named("detections")=detections));
 
 }
 
@@ -963,6 +974,8 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
   arma::vec l_upper_seq(k, arma::fill::zeros);
   arma::vec l_lower_seq(k, arma::fill::zeros);
   arma::vec lpl_seq(k, arma::fill::zeros);
+  arma::vec detections(k, arma::fill::zeros);
+
 
   // Keeping the first prior
   a_seq.col(0) = a;
@@ -1047,11 +1060,6 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
     R = Rcpp::as<arma::mat>(tmp["R"]);
     s = tmp["s"];
 
-    double f2 = tmp["f"];
-    double q2 = tmp["q"];
-    std::cout << " f: " << f << " f2: " << f2 << "\n";
-    std::cout << " q: " << q << " q2: " << q2 << "\n";
-
     // Save parameters
     lpl_seq(t) = tmp["lpl"];
     f_seq(t) = f;
@@ -1120,6 +1128,7 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
     if ((min_Ht >= bf_threshold) & ((min_Lt < bf_threshold) | (max_lt > 2))){
       // Get back at time t - lt + 1 and increase the prior, R.
       int index = t - max_lt + 1;
+      detections(t) = 1;
 
       // Re-setting the values of cumulative BF and run-length
       if (Lt_upper < Lt_lower) {
@@ -1132,9 +1141,9 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
         side = "Lower";
       }
 
-      if (verbose) {
-        std::cout << side << " Parametric change at time " << index << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << side << " Parametric change at time " << index << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
+      // }
       R_seq.slice(index) = R_seq.slice(index) % exception_D;
       for (int i = index; i < t; i++) {
         Rcpp::List tmp = update_dlm(y[i], arma::join_cols(F, X.col(i)), G, D,
@@ -1163,9 +1172,10 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
         lt_lower = 0;
         side = "Lower";
       }
-      if (verbose) {
-        std::cout << side << " Potential outlier at time " << t + 1 << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
-      }
+      // if (verbose) {
+      //   std::cout << side << " Potential outlier at time " << t + 1 << " with: " << "H: " << min_Ht << " L: " << min_Lt <<  " l: " << max_lt << "\n";
+      // }
+      detections(t) = 2;
       potential_outlier = TRUE;
       y_curr = NA_REAL;
     }
@@ -1216,7 +1226,8 @@ Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y,
       Rcpp::Named("L_lower")=L_lower_seq,
       Rcpp::Named("l_upper")=l_upper_seq,
       Rcpp::Named("l_lower")=l_lower_seq,
-      Rcpp::Named("loglik")=lpl));
+      Rcpp::Named("loglik")=lpl,
+      Rcpp::Named("detections")=detections));
 
 }
 

@@ -10,11 +10,10 @@ y[38:40] <- NA_real_
 
 
 model <- dlm(
-  polynomial_order = 2,
-  discount_factors = list(polynomial = c(0.97, 0.97))
+  polynomial = list(order = 2, discount_factor = 0.97)
 )
 
-ffr <- forward_filter_dlm_monitor(y = y, F = model[["FF"]],
+ffr <- forward_filter_dlm_monitor_bilateral(y = y, F = model[["FF"]],
                                   G = model[["GG"]], D = model[["D"]],
                                   a = matrix(c(y[1], 0), ncol = 1),
                                   R = diag(100, 2), n = 1, s = 1,
@@ -23,7 +22,7 @@ ffr <- forward_filter_dlm_monitor(y = y, F = model[["FF"]],
                                   location_shift = 4,
                                   scale_shift = 1,
                                   exception_D = diag(1/c(0.10, 0.30), 2),
-                                  verbose = TRUE)
+                                  verbose = TRUE, monitor_start = 5)
 plot(y)
 lines(ffr$f, col = "blue")
 lines(ffr$f + 1.96 * sqrt(ffr$q), col = "blue", lty = 2)

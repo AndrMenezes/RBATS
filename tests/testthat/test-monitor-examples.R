@@ -44,13 +44,11 @@ usethis::use_data(telephone_calls, overwrite = TRUE)
 rm(list = ls())
 devtools::load_all()
 data("telephone_calls")
-plot(telephone_calls$average_daily_calls)
 y <- telephone_calls$average_daily_calls
 plot(y)
 
 model <- dlm(
-  polynomial_order = 2,
-  discount_factors = list(polynomial = 0.90)
+  polynomial = list(order = 2, discount_factor = 0.90)
 )
 D_exp <- model[["D"]]
 diag(D_exp) <- 1/c(0.20, 0.90)
@@ -87,9 +85,8 @@ y <- market_share$share
 data_pybats_detection <- read.csv("~/Documents/paper_pybats_detection/replication/pybats_detection.csv")
 
 model <- dlm(
-  polynomial_order = 1,
-  discount_factors = list(polynomial = 1, regressors = 0.90),
-  xreg = X
+  polynomial = list(order = 1, discount_factor = 1),
+  regressor = list(xreg = X, discount_factor = 0.90)
 )
 R <- diag(4) * 4
 R[1, 1] <- 25

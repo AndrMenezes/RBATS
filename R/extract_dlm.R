@@ -99,8 +99,8 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
       m <- if (distribution == "filter") x$filtered$m[i_seas, ] else x$smoothed$ak[i_seas, ]
       C <- if (distribution == "filter") x$filtered$C[i_seas, i_seas, ] else x$smoothed$Rk[i_seas, i_seas, ]
       data_out$parameter <- "sum_seasonality"
-      data_out$mean <- crossprod(F_seas, m)[1, ]
-      data_out$variance <- apply(C, 3, function(Ct) crossprod(F_seas, Ct %*% F_seas)[1L,1L])
+      data_out$mean <- crossprod(F_seas, m)[1L, ]
+      data_out$variance <- apply(C, 3L, function(Ct) crossprod(F_seas, Ct %*% F_seas)[1L,1L])
       data_out$degrees_freedom <- n
       for (i in seq_along(prob_interval)) {
         p <- prob_interval[i]

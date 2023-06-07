@@ -217,6 +217,23 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// update_poisson_dglm
+void update_poisson_dglm(int y, arma::vec F, arma::mat G, arma::mat D, arma::vec& a, arma::mat& R, double *parm1, double *parm2);
+RcppExport SEXP _RBATS_update_poisson_dglm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP *parm1SEXP, SEXP *parm2SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type R(RSEXP);
+    Rcpp::traits::input_parameter< double >::type *parm1(*parm1SEXP);
+    Rcpp::traits::input_parameter< double >::type *parm2(*parm2SEXP);
+    update_poisson_dglm(y, F, G, D, a, R, *parm1, *parm2);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RBATS_update_dlm", (DL_FUNC) &_RBATS_update_dlm, 9},
@@ -229,6 +246,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RBATS_forward_filter_dlm_monitor_bilateral_X", (DL_FUNC) &_RBATS_forward_filter_dlm_monitor_bilateral_X, 16},
     {"_RBATS_backward_smoother_dlm", (DL_FUNC) &_RBATS_backward_smoother_dlm, 6},
     {"_RBATS_backward_smoother_dlm_X", (DL_FUNC) &_RBATS_backward_smoother_dlm_X, 7},
+    {"_RBATS_update_poisson_dglm", (DL_FUNC) &_RBATS_update_poisson_dglm, 8},
     {NULL, NULL, 0}
 };
 

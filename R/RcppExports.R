@@ -41,7 +41,11 @@ backward_smoother_dlm_X <- function(F, G, X, m_seq, a_seq, C_seq, R_seq) {
     .Call(`_RBATS_backward_smoother_dlm_X`, F, G, X, m_seq, a_seq, C_seq, R_seq)
 }
 
-update_poisson_dglm <- function(y, F, G, D, a, R, *parm1, *parm2) {
-    invisible(.Call(`_RBATS_update_poisson_dglm`, y, F, G, D, a, R, *parm1, *parm2))
+update_poisson_dglm <- function(y, F, G, D, a, R) {
+    .Call(`_RBATS_update_poisson_dglm`, y, F, G, D, a, R)
+}
+
+forward_filter_poisson_dglm <- function(y, F, G, D, a, R) {
+    .Call(`_RBATS_forward_filter_poisson_dglm`, y, F, G, D, a, R)
 }
 

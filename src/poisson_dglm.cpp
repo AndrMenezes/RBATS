@@ -1,21 +1,22 @@
 #include <RcppArmadillo.h>
 
 // [[Rcpp::export]]
-void update_poisson_dglm(int y, arma::vec F, arma::mat G, arma::mat D,
-                         arma::vec &a, arma::mat &R,
-                         double *parm1, double *parm2){
+Rcpp::List update_poisson_dglm(int y, arma::vec F, arma::mat G, arma::mat D,
+                               arma::vec a, arma::mat R){
 
   // Prior moments for the linear predictor
   double f = arma::as_scalar(F.t() * a);
   double q = arma::as_scalar(F.t() * R * F);
 
-  // Conjugate prior parameters for the poisson (approximation)
-  *parm1 = 1 / q;
-  *parm2 = std::exp(-f)  / q;
+  // Conjugate prior parameters for the poisson (1st order approximation of digamma)
+  double parm1 = 1 / q;
+  double parm2 = std::exp(-f)  / q;
 
-  // Update the posterior moments of linear predictor
-  double f_s = std::log((*parm1 + y)  / (*parm2 + 1)) + 1 / (2 * (*parm1 + y));
-  double q_s = (2 * *parm1 + 2 * y - 1) / (2 * (*parm1 + y));
+  // Update the posterior moments of linear predictor (2nd order approximation of digamma)
+  double f_s = R::digamma(parm1 + y) - std::log(parm2 + 1);
+//    std::log((parm1 + y)  / (parm2 + 1)) + 1 / (2 * (parm1 + y));
+  double q_s = R::trigamma(parm1 + y);
+    // (2 * parm1 + 2 * y - 1) / (2 * std::pow((parm1 + y), 2));
 
   // Linear Bayes update for the state parameters
   arma::vec m = a + R * F * (f_s - f) / q;
@@ -30,15 +31,20 @@ void update_poisson_dglm(int y, arma::vec F, arma::mat G, arma::mat D,
   // Discount information
   R = D % R;
 
-  std::cout << a << std::endl;
-  std::cout << R << std::endl;
-  std::cout << *parm2 << std::endl;
-  std::cout << *parm2 << std::endl;
-  // std::cout << *m << std::endl;
-  // std::cout << *C << std::endl;
-
+  // Output
+  return(Rcpp::List::create(
+      Rcpp::Named("f")=f,
+      Rcpp::Named("q")=q,
+      Rcpp::Named("a")=a,
+      Rcpp::Named("R")=R,
+      Rcpp::Named("m")=m,
+      Rcpp::Named("C")=C,
+      Rcpp::Named("parm1")=parm1,
+      Rcpp::Named("parm2")=parm2,
+      Rcpp::Named("lpl")=0));
 }
 
+// [[Rcpp::export]]
 Rcpp::List forward_filter_poisson_dglm(arma::vec y, arma::vec F, arma::mat G,
                                        arma::mat D,
                                        arma::vec a, arma::mat R){
@@ -51,23 +57,36 @@ Rcpp::List forward_filter_poisson_dglm(arma::vec y, arma::vec F, arma::mat G,
   arma::mat m_seq(a.size(), k, arma::fill::zeros);
   arma::vec parm1_seq(k, arma::fill::zeros);
   arma::vec parm2_seq(k, arma::fill::zeros);
+  arma::vec f_seq(k, arma::fill::zeros);
+  arma::vec q_seq(k, arma::fill::zeros);
 
-  double *parm1, *parm2;
   a_seq.col(0) = a;
   R_seq.slice(0) = R;
-  arma::vec m = a;
-  arma::mat C = R;
 
+  //Rcpp::List tmp;
   for (int t = 0; t < k; ++t){
-    update_poisson_dglm(y[t], F, G, D, a, R, m, C, *parm1, *parm2);
+    Rcpp::List tmp = update_poisson_dglm(y[t], F, G, D, a_seq.col(t), R_seq.slice(t));
 
-    parm1_seq(t) = *parm1;
-    parm2_seq(t) = *parm1;
-    m_seq.col(t) = m;
-    C_seq.slice(t) = C;
-    a_seq.col(t + 1) = a;
-    R_seq.slice(t + 1) = R;
+    parm1_seq(t) = tmp["parm1"];
+    parm2_seq(t) = tmp["parm2"];
+    f_seq(t) = tmp["f"];
+    q_seq(t) = tmp["q"];
+    m_seq.col(t) = Rcpp::as<arma::vec>(tmp["m"]);
+    C_seq.slice(t) = Rcpp::as<arma::mat>(tmp["C"]);
+    a_seq.col(t + 1) = Rcpp::as<arma::vec>(tmp["a"]);
+    R_seq.slice(t + 1) = Rcpp::as<arma::mat>(tmp["R"]);
   }
+
+  return(Rcpp::List::create(
+      Rcpp::Named("a")=a_seq,
+      Rcpp::Named("R")=R_seq,
+      Rcpp::Named("m")=m_seq,
+      Rcpp::Named("C")=C_seq,
+      Rcpp::Named("f")=f_seq,
+      Rcpp::Named("q")=q_seq,
+      Rcpp::Named("parm1")=parm1_seq,
+      Rcpp::Named("parm2")=parm2_seq,
+      Rcpp::Named("loglik")=0));
 
 
 }

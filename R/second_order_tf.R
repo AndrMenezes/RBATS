@@ -2,38 +2,48 @@ rm(list = ls())
 library(ggplot2)
 
 # Simulate the data
-nobs <- 100
-sd_y <- 10
-sd_E1 <- 0.8
-sd_beta <- 0.1
-true_lambda_1 <- 0.5
-true_lambda_2 <- 0.1
+nobs <- 200
+sd_y <- 1
+sd_E1 <- 0.0001
+sd_psi <- 0.1
+true_lambda_1 <- 0.8
+true_lambda_2 <- -0.5
 
 E1 <- numeric(nobs)
 E2 <- numeric(nobs)
-beta <- numeric(nobs)
+psi <- numeric(nobs)
 y <- numeric(nobs)
 E1[1L] <- 0
-beta[1L] <- 10
+psi[1L] <- 2.5
 
-set.seed(66)
-y[1L] <- E1[1L] + rnorm(n = 1, sd = sd_y)
+# Covariate
+npulse <- 25
 x <- numeric(nobs) # rpois(nobs, lambda = 1)
-x[c(20, 30, 40, 60, 80)] = seq(2, 20, l = 5)
+impulse <- seq(1, nobs, by = nobs / npulse)
+x[impulse] <- 1
+
+# Random errors
+set.seed(66)
+nu <- rnorm(n = nobs, sd = sd_y)
+omega_psi <- rnorm(n = nobs, sd = sd_psi)
+omega_E1 <- rnorm(n = nobs, sd = sd_E1)
+
+# First observation
+y[1L] <- E1[1L] + nu[1L]
 
 for (t in seq_len(nobs)[-1]) {
   E2[t] <- E1[t - 1]
-  beta[t] <- beta[t - 1] + rnorm(n = 1, sd = sd_beta)
-  E1[t] <- true_lambda_1 * E1[t - 1] + true_lambda_2 * E2[t - 1] + beta[t] * x[t] + rnorm(n = 1, sd = sd_E1)
-  y[t] <- E1[t] + rnorm(n = 1, sd = sd_y)
+  psi[t] <- psi[t - 1] + omega_psi[t]
+  E1[t] <- true_lambda_1 * E1[t - 1] + true_lambda_2 * E2[t - 1] + psi[t] * x[t] + omega_E1[t]
+  y[t] <- E1[t] + nu[t]
 }
-all.equal(length(y), length(E1), length(E2), length(beta))
+all.equal(length(y), length(E1), length(E2), length(psi))
 x11()
 par(mfrow = c(4, 1))
 plot(y, main = expression(y[t]))
 plot(E1, main = expression(E[1,t]))
 plot(E2, main = expression(E[2,t]))
-plot(beta, main = expression(beta[t]))
+plot(psi, main = expression(psi[t]))
 graphics.off()
 
 
@@ -42,15 +52,15 @@ g <- function(theta, x, E2_t) {
   E1_t <- theta[1L]
   lambda1_t <- theta[2L]
   lambda2_t <- theta[3L]
-  beta_t <- theta[4L]
-  c(lambda1_t * E1_t + lambda2_t * E2_t + beta_t * x,
-    lambda1_t, lambda2_t, beta_t)
+  psi_t <- theta[4L]
+  c(lambda1_t * E1_t + lambda2_t * E2_t + psi_t * x,
+    lambda1_t, lambda2_t, psi_t)
 }
 GG <- function(theta, x, E2_t) {
   E1_t <- theta[1L]
   lambda1_t <- theta[2L]
   lambda2_t <- theta[3L]
-  beta_t <- theta[4L]
+  psi_t <- theta[4L]
   matrix(data = c(lambda1_t, E1_t, E2_t, x,
                   0, 1, 0, 0,
                   0, 0, 1, 0,
@@ -82,7 +92,7 @@ list_prior[[1L]][["s"]] <- s0
 list_posterior <- list()
 list_predictive <- list()
 loglik <- 0
-parms_names <- c("E1", "lambda1", "lambda2", "beta")
+parms_names <- c("E1", "lambda1", "lambda2", "psi")
 
 # Sequential learning
 for (t in seq_len(nobs)) {

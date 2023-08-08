@@ -9,8 +9,10 @@ dlm(
   seasonal = list(type = c("none", "free", "fourier"), period = NULL, harmonics = NULL,
     discount_factor = 0.98),
   regressor = list(xreg = NULL, discount_factor = 0.99),
+  autoregressive = list(order = NULL, discount_factor = 0.998),
+  transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
   df_variance = 1,
-  variance_law = list(type = "identity", power = 2),
+  variance_law = list(type = "identity", power = 1),
   monitor = list(execute = FALSE, verbose = TRUE, start_time = 10L, bilateral = FALSE,
     bf_threshold = 0.135, location_shift = 4, scale_shift = 1, discount_factors =
     list(polynomial = 0.2, seasonal = 0.8, regressors = 0.8))

@@ -3,8 +3,10 @@
 #' @description Create object of class \code{dlm}.
 #'
 #' @param polynomial list. Order of polynomial model.
-#' @param seasonal list. Components to specify seasonal components.
-#' @param regressor list.
+#' @param seasonal list. Components to specify seasonal model.
+#' @param regressor list. Components to specify a dynamic regression model.
+#' @param autoregressive list. Components to specify a dynamic autoregressive model.
+#' @param transfer_function list. Components to specify a dynamic transfer function model.
 #' @param df_variance numeric. Discount factor for observation variance. Use a beta-gamma random walk.
 #' @param variance_law list. Variance law \code{type} and \code{power} parameter.
 #' @param monitor list.
@@ -26,19 +28,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                 autoregressive = list(order = NULL, discount_factor = 0.998),
                 transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
                 df_variance = 1,
-                variance_law = list(type = "identity", power = 1),
-                monitor = list(
-                  execute = FALSE,
-                  verbose = TRUE,
-                  start_time = 10L,
-                  bilateral = FALSE,
-                  bf_threshold = 0.135,
-                  location_shift = 4,
-                  scale_shift = 1,
-                  discount_factors = list(
-                    polynomial = 0.20,
-                    seasonal = 0.80,
-                    regressors = 0.80))) {
+                variance_law = list(type = "identity", power = 1)) {
 
   if (missing(polynomial) & missing(autoregressive)) {
     polynomial <- list(order = 1L, discount_factor = 0.95)
@@ -127,46 +117,12 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   mod[["polynomial_order"]] <- if (missing(polynomial)) NULL else polynomial[["order"]]
   mod[["ar_order"]] <- if (missing(autoregressive)) 0 else autoregressive[["order"]]
   mod[["tf_order"]] <- if (missing(transfer_function)) 0 else transfer_function[["order"]]
-  seasonal[["type"]] <- seas_type
-  mod[["seasonal"]] <- if (missing(seasonal)) NULL else seasonal
+  mod[["seasonal"]] <- seasonal
   mod[["parameters_names"]] <- comp_names
   mod[["n_parms"]] <- length(comp_names) - 2*mod[["ar_order"]] - 2*mod[["tf_order"]]
   mod[["loglik"]] <- 0
   mod[["time"]] <- 0L
   mod[["call"]] <- match.call()
-
-  # Include monitor information if it is available
-  if (monitor[["execute"]]) {
-    # Polynomial
-    df_exception <- 1/monitor[["discount_factors"]][["polynomial"]]
-    if (length(df_exception) != polynomial[["order"]]) {
-      df_exception <- c(df_exception[1L], diag(mod[["D"]])[2:polynomial[["order"]]])
-    }
-    # Seasonal
-    if (seas_type != "none") {
-      df_seas <- monitor[["discount_factors"]][["seasonal"]]
-      df_seas <- if (is.null(df_seas)) diag(mod_seas[["D"]]) else rep(1/df_seas, nrow(mod_seas[["FF"]]))
-      df_exception <- c(df_exception, df_seas)
-    }
-    # Regressor
-    if (!is.null(regressor[["xreg"]])) {
-      df_reg <- 1/monitor[["discount_factors"]][["regressor"]]
-      df_reg <- if (length(df_reg) != ncol(regressor[["xreg"]])) rep(df_reg, ncol(regressor[["xreg"]])) else df_reg
-      df_reg <- if (is.null(df_reg)) 1/diag(mod_reg[["D"]]) else df_reg
-      df_exception <- c(df_exception, df_reg)
-    }
-    # Exception discount factor matrix
-    D_exception <- mod[["D"]]
-    diag(D_exception) <- df_exception
-    mod[["monitor"]] <- list(
-      verbose = monitor[["verbose"]],
-      start_time = monitor[["start_time"]],
-      bilateral = monitor[["bilateral"]],
-      bf_threshold = monitor[["bf_threshold"]],
-      location_shift = monitor[["location_shift"]],
-      scale_shift = monitor[["scale_shift"]],
-      D = D_exception)
-  }
 
 
   structure(mod, class = "dlm")

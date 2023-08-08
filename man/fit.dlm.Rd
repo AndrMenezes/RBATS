@@ -15,9 +15,9 @@ forward_filter(model, y, ...)
 
 backward_smoother(model, filtering_parameters, ...)
 
-\method{fit}{dlm}(model, y, a, R, n = 1, s = 1, smooth = TRUE, ...)
+\method{fit}{dlm}(model, y, m0, C0, n = 1, s = 1, smooth = TRUE, ...)
 
-\method{forward_filter}{dlm}(model, y, a, R, n = 1, s = 1, ...)
+\method{forward_filter}{dlm}(model, y, m0, C0, n = 1, s = 1, ...)
 
 \method{backward_smoother}{dlm}(model, filtering_parameters, ...)
 }
@@ -32,7 +32,7 @@ backward_smoother(model, filtering_parameters, ...)
 (\code{a} and \code{R}) and historical posterior moments
 (\code{m} and \code{C}).}
 
-\item{a, R}{vector and matrix. prior state mean vector and covariance matrix.}
+\item{m0, c0}{vector and matrix. posterior mean vector and covariance matrix at time t-1.}
 
 \item{n, s}{numeric. Prior sample size and mean for the variance, respectively.
 For both parameter the default is 1.}

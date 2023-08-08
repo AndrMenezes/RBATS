@@ -56,8 +56,8 @@ out <- forward_filter_dlm(y = y, F = mod$FF, G = mod$GG, D = mod$D,
                           n = 1, s = 1, df_variance = 1,
                           ar_order = 2L,
                           n_parms = 0L)
-plot(out$m[3L, ]); abline(h=true_phi_1)
-plot(out$m[4L, ]); abline(h=true_phi_2)
+plot(out$m[3L, ]); abline(h = true_phi_1)
+plot(out$m[4L, ]); abline(h = true_phi_2)
 
 # level + AR(2) -----------------------------------------------------------
 

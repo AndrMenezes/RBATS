@@ -31,64 +31,28 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
 
   # Model info
   y <- x$y
-  nobs <- length(y)
   df_variance <- x$model$df_variance
   seas_type <- x$model$seasonal$type
 
+  # Template
   data_out <- data.frame(t = seq_along(y), y = y, distribution = distribution)
 
   # Response (predictive or smoothed mean response)
   if (component == "response") {
-    f <- x$filtered$f[, 1L]
-    q <- x$filtered$q[, 1L]
-    n <- df_variance * x$filtered$n[-(nobs + 1)]
-    if (distribution == "smooth") {
-      f <- x$smoothed$fk[, 1L]
-      q <- x$smoothed$qk[, 1L]
-    }
-    data_out$mean <- f
-    data_out$variance <- q
-    data_out$degrees_freedom <- n
-    # Compute the credibility intervals
-    for (i in seq_along(prob_interval)) {
-      p <- prob_interval[i]
-      label <- as.character(100 * (1 - p))
-      data_out[[paste0("ci_lower__", label)]] <- (
-        data_out$mean + qt(
-          p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-      data_out[[paste0("ci_upper__", label)]] <- (
-        data_out$mean + qt(
-          1 - p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-    }
+    data_out$mean <- if (distribution == "filter") x$filtered$f[, 1L] else x$smoothed$fk[, 1L]
+    data_out$variance <- if (distribution == "filter") x$filtered$q[, 1L] else x$smoothed$qk[, 1L]
+    data_out$degrees_freedom <- df_variance * (x$filtered$n - 1)
   }
 
   # State parameters
   if (component == "state") {
-    n <- x$filtered$n
     parms_names <- x$model$parameters_names
     list_to_append <- list()
-
     for (j in seq_along(parms_names)) {
-      m <- x$filtered$m[j, ]
-      C <- x$filtered$C[j, j, ]
-      if (distribution == "smooth") {
-        m <- x$smoothed$ak[j, ]
-        C <- x$smoothed$Rk[j, j, ]
-      }
       data_out$parameter <- parms_names[j]
-      data_out$mean <- m
-      data_out$variance <- C
-      data_out$degrees_freedom <- n
-      for (i in seq_along(prob_interval)) {
-        p <- prob_interval[i]
-        label <- as.character(100 * (1 - p))
-        data_out[[paste0("ci_lower__", label)]] <- (
-          data_out$mean + qt(
-            p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-        data_out[[paste0("ci_upper__", label)]] <- (
-          data_out$mean + qt(
-            1 - p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-      }
+      data_out$mean <- if (distribution == "filter") x$filtered$m[j, ] else x$smoothed$ak[j, ]
+      data_out$variance <- if (distribution == "filter") x$filtered$C[j, j, ] else x$smoothed$Rk[j, j, ]
+      data_out$degrees_freedom <- x$filtered$n
       # Appending
       list_to_append[[j]] <- data_out
     }
@@ -100,23 +64,24 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
       C <- if (distribution == "filter") x$filtered$C[i_seas, i_seas, ] else x$smoothed$Rk[i_seas, i_seas, ]
       data_out$parameter <- "sum_seasonality"
       data_out$mean <- crossprod(F_seas, m)[1L, ]
-      data_out$variance <- apply(C, 3L, function(Ct) crossprod(F_seas, Ct %*% F_seas)[1L,1L])
-      data_out$degrees_freedom <- n
-      for (i in seq_along(prob_interval)) {
-        p <- prob_interval[i]
-        label <- as.character(100 * (1 - p))
-        data_out[[paste0("ci_lower__", label)]] <- (
-          data_out$mean + qt(
-            p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-        data_out[[paste0("ci_upper__", label)]] <- (
-          data_out$mean + qt(
-            1 - p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
-      }
+      data_out$variance <- apply(C, 3L, function(Ct) crossprod(F_seas, Ct %*% F_seas)[1L, 1L])
+      data_out$degrees_freedom <- x$filtered$n
       list_to_append[[j + 1L]] <- data_out
     }
-
     data_out <- do.call("rbind", list_to_append)
   }
+
+  # Compute the credibility intervals
+  for (p in prob_interval) {
+    label <- as.character(100 * (1 - p))
+    data_out[[paste0("ci_lower__", label)]] <- (
+      data_out$mean + qt(
+        p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
+    data_out[[paste0("ci_upper__", label)]] <- (
+      data_out$mean + qt(
+        1 - p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
+  }
+
 
   data_out
 }

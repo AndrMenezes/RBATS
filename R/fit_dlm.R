@@ -6,7 +6,7 @@
 #'
 #' @param model a model object of class \code{dlm}.
 #' @param y vector. Observed value of time series.
-#' @param a,R vector and matrix. prior state mean vector and covariance matrix.
+#' @param m0,C0 vector and matrix. posterior mean vector and covariance matrix at time t-1.
 #' @param n,s numeric. Prior sample size and mean for the variance, respectively.
 #' For both parameter the default is 1.
 #' @param smooth logical. Should smoothing be performed? Default is \code{TRUE}.
@@ -63,7 +63,11 @@ fit.dlm <- function(model, y, m0, C0, n = 1, s = 1, smooth = TRUE, ...) {
                                C = filtered[["C"]][, , t_end],
                                n = filtered[["n"]][t_end],
                                s = filtered[["s"]][t_end])
-  model["loglik"] <- filtered[["loglik"]]
+  # Predictive log-likelihood
+  s_q <- sqrt(filtered[["q"]][, 1L])
+  e <- y - filtered[["f"]][, 1L]
+  dof <- model[["df_variance"]] * (filtered[["n"]] - 1)
+  model["loglik"] <- sum(log(dt(x = e / s_q, df = dof) / s_q))
   model["time"] <- t_end
 
   # Return an object of class fit.dlm

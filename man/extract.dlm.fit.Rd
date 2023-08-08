@@ -17,7 +17,7 @@ extract(x, ...)
 )
 }
 \arguments{
-\item{x}{an object of class \code{\link{dlm.fit}}.}
+\item{x}{an object of class \code{dlm.fit}.}
 
 \item{...}{currently not used.}
 
@@ -25,7 +25,7 @@ extract(x, ...)
 
 \item{distribution}{character. The options are  \code{filter} or \code{smooth}. Default is \code{filter}}
 
-\item{which}{character. The options are \code{state} or \code{response}.}
+\item{component}{character. The options are \code{state} or \code{response}.}
 }
 \value{
 A \code{data.frame} with the results for each time.

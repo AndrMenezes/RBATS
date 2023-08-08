@@ -20,7 +20,7 @@ forecast_aR(object, horizon, ...)
   horizon,
   xreg = NULL,
   interval = TRUE,
-  level = 0.1,
+  prob_interval = 0.1,
   state_parameters = FALSE,
   ...
 )
@@ -40,7 +40,7 @@ forecast_aR(object, horizon, ...)
 
 \item{interval}{logical. Should exact credible interval be returned?}
 
-\item{level}{numeric. The probability level of the credible interval.}
+\item{prob_interval}{numeric. The probability level of the credible interval.}
 
 \item{state_parameters}{logical. Should returned the future prior moments of state
 parameters? Default is \code{FALSE}.}

@@ -7,9 +7,9 @@ test_that("filter and smooth functions for growth model for Nile data works", {
   )
 
   # Fitting the model
-  fitted_object <- fit_cpp.dlm(model = model, y = y,
-                               a = matrix(c(y[1]), ncol = 1),
-                               R = diag(100, 1))
+  fitted_object <- fit(model = model, y = y,
+                       m0 = matrix(c(y[1]), ncol = 1),
+                       C0 = diag(100, 1))
 
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
@@ -23,12 +23,48 @@ test_that("filter and smooth functions with missing value for Nile data works", 
   )
 
   # Fitting the model
-  fitted_object <- fit_cpp.dlm(model = model, y = y,
-                               a = matrix(c(y[1]), ncol = 1),
-                               R = diag(100, 1))
+  fitted_object <- fit(model = model, y = y,
+                       m0 = matrix(c(y[1]), ncol = 1),
+                       C0 = diag(100, 1))
   str(fitted_object)
-  fitted_object$model$posterior$C
 
+
+  expect_s3_class(fitted_object, "dlm.fit")
+  expect_s3_class(fitted_object$model, "dlm")
+})
+
+
+test_that("level + ar(1) for Nile data works", {
+  y <- c(Nile)
+  y[c(10, 30)] <- NA_real_
+  model <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.90),
+    autoregressive = list(order = 1, discount_factor = 0.998)
+  )
+
+  model$n_parms
+  model$ar_order
+  model$D
+  # Fitting the model
+  fitted_object <- fit(model = model, y = y,
+                       m0 = matrix(c(y[1], 0, 0), ncol = 1),
+                       C0 = diag(c(100, 2, 1)))
+  str(fitted_object)
+  plot(y)
+  lines(fitted_object$filtered$f[, 1L], col = "blue")
+  lines(fitted_object$filtered$m[1L, ], col = "red")
+  fitted_object$filtered$m[3L, ]
+
+
+  model <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.90),
+    autoregressive = list(order = 2, discount_factor = 0.998)
+  )
+
+  # Fitting the model
+  fitted_object <- fit(model = model, y = y,
+                       m0 = matrix(c(y[1], 0, 0, 0, 0), ncol = 1),
+                       C0 = diag(c(100, 2, 2, 1, 1)))
 
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
@@ -45,9 +81,10 @@ test_that("filter and smooth for seasonal growth model for AirPassengers data wo
     seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3),
                     discount_factor = 0.98)
   )
-  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
-                               a = matrix(c(y[1], rep(0, 7)), ncol = 1),
-                               R = diag(100, 8))
+
+  fitted_object <- fit(model = model_object, y = y,
+                       m0 = matrix(c(y[1], rep(0, 7)), ncol = 1),
+                       C0 = diag(100, 8))
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 
@@ -57,9 +94,13 @@ test_that("filter and smooth for seasonal growth model for AirPassengers data wo
     seasonal = list(type = "free", period = 12,
                     discount_factor = 0.99)
   )
-  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
-                               a = matrix(c(y[1], rep(0, 12)), ncol = 1),
-                               R = diag(100, 13))
+  fitted_object <- fit(model = model_object, y = y,
+                      m0 = matrix(c(y[1], rep(0, 12)), ncol = 1),
+                      C0 = diag(100, 13))
+  plot(y)
+  lines(fitted_object$filtered$f[, 1L], col = "blue")
+  lines(fitted_object$smoothed$ak[1L, ], col = "red")
+
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 })
@@ -71,11 +112,19 @@ test_that("filter and smooth for seasonal growth model for us_retail_employment 
   model_object <- dlm(
     polynomial = list(order = 2, discount_factor = 0.90),
     seasonal = list(type = "fourier", period = 12, harmonics = c(1, 2, 3),
-                    discount_factor = 0.98)
+                    discount_factor = 0.98),
+    autoregressive = list(order = 2, discount_factor = 0.998)
   )
-  fitted_object <- fit_cpp.dlm(model = model_object, y = y,
-                               a = matrix(c(y[1], rep(0, 7)), ncol = 1),
-                               R = diag(100, 8))
+  fitted_object <- fit(model = model_object, y = y,
+                       m0 = matrix(c(y[1], rep(0, 7), rep(0, 4)), ncol = 1),
+                       C0 = diag(c(rep(100, 8), 2, 2, 1, 1), 12))
+  plot(y)
+  lines(fitted_object$filtered$f[, 1L], col = "red")
+  lines(fitted_object$smoothed$ak[1L, ], col = "blue")
+
+  fitted_object$filtered$m[11L, length(y)]
+  fitted_object$filtered$m[12L, length(y)]
+
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 

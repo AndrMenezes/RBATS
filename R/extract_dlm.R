@@ -64,7 +64,7 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
 
   # State parameters
   if (component == "state") {
-    n <- x$filtered$n[-1L]
+    n <- x$filtered$n
     parms_names <- x$model$parameters_names
     list_to_append <- list()
 

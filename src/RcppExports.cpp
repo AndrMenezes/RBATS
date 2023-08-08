@@ -11,209 +11,40 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// update_dlm
-Rcpp::List update_dlm(const double y, const arma::vec F, const arma::mat G, const arma::mat D, arma::vec a, arma::mat R, const double n, const double s, const double df_variance);
-RcppExport SEXP _RBATS_update_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double >::type y(ySEXP);
-    Rcpp::traits::input_parameter< const arma::vec >::type F(FSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type G(GSEXP);
-    Rcpp::traits::input_parameter< const arma::mat >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< const double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_dlm(y, F, G, D, a, R, n, s, df_variance));
-    return rcpp_result_gen;
-END_RCPP
-}
 // forward_filter_dlm
-Rcpp::List forward_filter_dlm(arma::vec const y, arma::vec const F, arma::mat const G, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance);
-RcppExport SEXP _RBATS_forward_filter_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP) {
+Rcpp::List forward_filter_dlm(arma::vec y, arma::vec F, arma::mat G, arma::mat D, arma::vec m, arma::mat C, double n, double s, double df_variance, int ar_order, int n_parms);
+RcppExport SEXP _RBATS_forward_filter_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP mSEXP, SEXP CSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP ar_orderSEXP, SEXP n_parmsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type D(DSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type C(CSEXP);
     Rcpp::traits::input_parameter< double >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm(y, F, G, D, a, R, n, s, df_variance));
-    return rcpp_result_gen;
-END_RCPP
-}
-// forward_filter_dlm_X
-Rcpp::List forward_filter_dlm_X(arma::vec const y, arma::vec const F, arma::mat const X, arma::mat const G, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance);
-RcppExport SEXP _RBATS_forward_filter_dlm_X(SEXP ySEXP, SEXP FSEXP, SEXP XSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm_X(y, F, X, G, D, a, R, n, s, df_variance));
-    return rcpp_result_gen;
-END_RCPP
-}
-// bayes_factor
-double bayes_factor(double x, double mu, double tau);
-RcppExport SEXP _RBATS_bayes_factor(SEXP xSEXP, SEXP muSEXP, SEXP tauSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
-    rcpp_result_gen = Rcpp::wrap(bayes_factor(x, mu, tau));
-    return rcpp_result_gen;
-END_RCPP
-}
-// forward_filter_dlm_monitor
-Rcpp::List forward_filter_dlm_monitor(arma::vec const y, arma::vec const F, arma::mat const G, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance, const double bf_threshold, const double location_shift, const double scale_shift, arma::mat const exception_D, const bool verbose, const int monitor_start);
-RcppExport SEXP _RBATS_forward_filter_dlm_monitor(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP bf_thresholdSEXP, SEXP location_shiftSEXP, SEXP scale_shiftSEXP, SEXP exception_DSEXP, SEXP verboseSEXP, SEXP monitor_startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    Rcpp::traits::input_parameter< const double >::type bf_threshold(bf_thresholdSEXP);
-    Rcpp::traits::input_parameter< const double >::type location_shift(location_shiftSEXP);
-    Rcpp::traits::input_parameter< const double >::type scale_shift(scale_shiftSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type exception_D(exception_DSEXP);
-    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< const int >::type monitor_start(monitor_startSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm_monitor(y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// forward_filter_dlm_monitor_X
-Rcpp::List forward_filter_dlm_monitor_X(arma::vec const y, arma::vec const F, arma::mat const X, arma::mat const G, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance, const double bf_threshold, const double location_shift, const double scale_shift, arma::mat const exception_D, const bool verbose, const int monitor_start);
-RcppExport SEXP _RBATS_forward_filter_dlm_monitor_X(SEXP ySEXP, SEXP FSEXP, SEXP XSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP bf_thresholdSEXP, SEXP location_shiftSEXP, SEXP scale_shiftSEXP, SEXP exception_DSEXP, SEXP verboseSEXP, SEXP monitor_startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    Rcpp::traits::input_parameter< const double >::type bf_threshold(bf_thresholdSEXP);
-    Rcpp::traits::input_parameter< const double >::type location_shift(location_shiftSEXP);
-    Rcpp::traits::input_parameter< const double >::type scale_shift(scale_shiftSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type exception_D(exception_DSEXP);
-    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< const int >::type monitor_start(monitor_startSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm_monitor_X(y, F, X, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// forward_filter_dlm_monitor_bilateral
-Rcpp::List forward_filter_dlm_monitor_bilateral(arma::vec const y, arma::vec const F, arma::mat const G, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance, const double bf_threshold, const double location_shift, const double scale_shift, arma::mat const exception_D, const bool verbose, const int monitor_start);
-RcppExport SEXP _RBATS_forward_filter_dlm_monitor_bilateral(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP bf_thresholdSEXP, SEXP location_shiftSEXP, SEXP scale_shiftSEXP, SEXP exception_DSEXP, SEXP verboseSEXP, SEXP monitor_startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    Rcpp::traits::input_parameter< const double >::type bf_threshold(bf_thresholdSEXP);
-    Rcpp::traits::input_parameter< const double >::type location_shift(location_shiftSEXP);
-    Rcpp::traits::input_parameter< const double >::type scale_shift(scale_shiftSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type exception_D(exception_DSEXP);
-    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< const int >::type monitor_start(monitor_startSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm_monitor_bilateral(y, F, G, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start));
-    return rcpp_result_gen;
-END_RCPP
-}
-// forward_filter_dlm_monitor_bilateral_X
-Rcpp::List forward_filter_dlm_monitor_bilateral_X(arma::vec const y, arma::vec const F, arma::mat const G, arma::mat const X, arma::mat const D, arma::vec a, arma::mat R, double n, double s, const double df_variance, const double bf_threshold, const double location_shift, const double scale_shift, arma::mat const exception_D, const bool verbose, const int monitor_start);
-RcppExport SEXP _RBATS_forward_filter_dlm_monitor_bilateral_X(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP XSEXP, SEXP DSEXP, SEXP aSEXP, SEXP RSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP bf_thresholdSEXP, SEXP location_shiftSEXP, SEXP scale_shiftSEXP, SEXP exception_DSEXP, SEXP verboseSEXP, SEXP monitor_startSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type D(DSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type a(aSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type R(RSEXP);
-    Rcpp::traits::input_parameter< double >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const double >::type df_variance(df_varianceSEXP);
-    Rcpp::traits::input_parameter< const double >::type bf_threshold(bf_thresholdSEXP);
-    Rcpp::traits::input_parameter< const double >::type location_shift(location_shiftSEXP);
-    Rcpp::traits::input_parameter< const double >::type scale_shift(scale_shiftSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type exception_D(exception_DSEXP);
-    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< const int >::type monitor_start(monitor_startSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm_monitor_bilateral_X(y, F, G, X, D, a, R, n, s, df_variance, bf_threshold, location_shift, scale_shift, exception_D, verbose, monitor_start));
+    Rcpp::traits::input_parameter< double >::type df_variance(df_varianceSEXP);
+    Rcpp::traits::input_parameter< int >::type ar_order(ar_orderSEXP);
+    Rcpp::traits::input_parameter< int >::type n_parms(n_parmsSEXP);
+    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm(y, F, G, D, m, C, n, s, df_variance, ar_order, n_parms));
     return rcpp_result_gen;
 END_RCPP
 }
 // backward_smoother_dlm
-Rcpp::List backward_smoother_dlm(arma::vec const F, arma::mat const G, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
-RcppExport SEXP _RBATS_backward_smoother_dlm(SEXP FSEXP, SEXP GSEXP, SEXP m_seqSEXP, SEXP a_seqSEXP, SEXP C_seqSEXP, SEXP R_seqSEXP) {
+Rcpp::List backward_smoother_dlm(arma::vec F, arma::cube G_seq, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
+RcppExport SEXP _RBATS_backward_smoother_dlm(SEXP FSEXP, SEXP G_seqSEXP, SEXP m_seqSEXP, SEXP a_seqSEXP, SEXP C_seqSEXP, SEXP R_seqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::cube >::type G_seq(G_seqSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type m_seq(m_seqSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type a_seq(a_seqSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type C_seq(C_seqSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type R_seq(R_seqSEXP);
-    rcpp_result_gen = Rcpp::wrap(backward_smoother_dlm(F, G, m_seq, a_seq, C_seq, R_seq));
-    return rcpp_result_gen;
-END_RCPP
-}
-// backward_smoother_dlm_X
-Rcpp::List backward_smoother_dlm_X(arma::vec const F, arma::mat const G, arma::mat const X, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
-RcppExport SEXP _RBATS_backward_smoother_dlm_X(SEXP FSEXP, SEXP GSEXP, SEXP XSEXP, SEXP m_seqSEXP, SEXP a_seqSEXP, SEXP C_seqSEXP, SEXP R_seqSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec const >::type F(FSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type G(GSEXP);
-    Rcpp::traits::input_parameter< arma::mat const >::type X(XSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type m_seq(m_seqSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type a_seq(a_seqSEXP);
-    Rcpp::traits::input_parameter< arma::cube >::type C_seq(C_seqSEXP);
-    Rcpp::traits::input_parameter< arma::cube >::type R_seq(R_seqSEXP);
-    rcpp_result_gen = Rcpp::wrap(backward_smoother_dlm_X(F, G, X, m_seq, a_seq, C_seq, R_seq));
+    rcpp_result_gen = Rcpp::wrap(backward_smoother_dlm(F, G_seq, m_seq, a_seq, C_seq, R_seq));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -251,16 +82,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RBATS_update_dlm", (DL_FUNC) &_RBATS_update_dlm, 9},
-    {"_RBATS_forward_filter_dlm", (DL_FUNC) &_RBATS_forward_filter_dlm, 9},
-    {"_RBATS_forward_filter_dlm_X", (DL_FUNC) &_RBATS_forward_filter_dlm_X, 10},
-    {"_RBATS_bayes_factor", (DL_FUNC) &_RBATS_bayes_factor, 3},
-    {"_RBATS_forward_filter_dlm_monitor", (DL_FUNC) &_RBATS_forward_filter_dlm_monitor, 15},
-    {"_RBATS_forward_filter_dlm_monitor_X", (DL_FUNC) &_RBATS_forward_filter_dlm_monitor_X, 16},
-    {"_RBATS_forward_filter_dlm_monitor_bilateral", (DL_FUNC) &_RBATS_forward_filter_dlm_monitor_bilateral, 15},
-    {"_RBATS_forward_filter_dlm_monitor_bilateral_X", (DL_FUNC) &_RBATS_forward_filter_dlm_monitor_bilateral_X, 16},
+    {"_RBATS_forward_filter_dlm", (DL_FUNC) &_RBATS_forward_filter_dlm, 11},
     {"_RBATS_backward_smoother_dlm", (DL_FUNC) &_RBATS_backward_smoother_dlm, 6},
-    {"_RBATS_backward_smoother_dlm_X", (DL_FUNC) &_RBATS_backward_smoother_dlm_X, 7},
     {"_RBATS_update_poisson_dglm", (DL_FUNC) &_RBATS_update_poisson_dglm, 6},
     {"_RBATS_forward_filter_poisson_dglm", (DL_FUNC) &_RBATS_forward_filter_poisson_dglm, 6},
     {NULL, NULL, 0}

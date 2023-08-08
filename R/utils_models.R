@@ -90,14 +90,44 @@
   comp_names <- if (is.null(colnames(X))) paste0("regressor_", seq_len(p)) else colnames(X)
   colnames(X) <- comp_names
   GG <- diag(nrow = p)
+  FF <- matrix(rep(NA_real_, p))
 
   # D <- .diag_one(discount_factors)
   D <- diag(1/discount_factors, ncol = p, nrow = p)
   D[which(D != diag(D))] <- 1/discount_factors[1L]
 
-  colnames(D) <- rownames(D) <- colnames(GG) <- rownames(GG) <- comp_names
-  list(xreg = X, GG = GG, D = D)
+  colnames(D) <- rownames(D) <- colnames(GG) <- rownames(GG) <- rownames(FF) <- comp_names
+  list(xreg = X, FF = FF, GG = GG, D = D)
 }
+
+.autoregressive_model <- function(order, discount_factors) {
+  FF <- matrix(c(1, rep(0, 2 * order - 1)), ncol = 1L)
+
+  GG <- diag(1, 2 * order)
+  if (order > 1L) {
+    # Pop up the second main diagonal of the matrix
+    diag(GG[1:order, 1:order]) <- 0
+    for (i in 1:(order - 1)) {
+      GG[i + 1, i] <- 1
+    }
+  }
+  # Fill with NA the first row to represent the posterior mean of past time
+  GG[1L, ] <- NA_real_
+
+  # Discount factor matrix
+  discount_factors <- if (length(discount_factors) == 1L) rep(discount_factors, order) else discount_factors
+  D <- diag(c(rep(1, order), 1/discount_factors), ncol = 2 * order, nrow = 2 * order)
+  D[which(D != diag(D))] <- 1
+
+
+  # Named the components
+  comp_names <- c(paste0("xi_", 1:order), paste0("phi_", 1:order))
+
+  colnames(D) <- rownames(D) <- colnames(GG) <- rownames(GG) <- rownames(FF) <- comp_names
+
+  list(FF = FF, GG = GG, D = D)
+}
+
 
 .bdiag_one <- function(...) {
   bX <- .bdiag(...)

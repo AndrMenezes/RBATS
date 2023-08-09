@@ -197,7 +197,7 @@ Rcpp::List backward_smoother_dlm(arma::vec F,
     // Using {inv_sympd} because is faster than {inv} and R is a covariance matrix (usually p.d.)
 
     // B_{t-k}
-    B_t_k = C_seq.slice(T_end-k-1) * G_seq.slice(T_end-k).t() * arma::inv_sympd(R_seq.slice(T_end-k));
+    B_t_k = C_seq.slice(T_end-k-1) * G_seq.slice(T_end-k).t() * arma::inv_sympd(R_seq.slice(T_end-k), arma::inv_opts::allow_approx);
 
     // a_t(-k) and R_t(-k)
     ak = m_seq.col(T_end - k - 1) + B_t_k * (ak - a_seq.col(T_end - k));

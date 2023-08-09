@@ -82,7 +82,6 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
         1 - p / 2, df = data_out$degrees_freedom) * sqrt(data_out$variance))
   }
 
-
   data_out
 }
 

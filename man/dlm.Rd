@@ -12,24 +12,23 @@ dlm(
   autoregressive = list(order = NULL, discount_factor = 0.998),
   transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
   df_variance = 1,
-  variance_law = list(type = "identity", power = 1),
-  monitor = list(execute = FALSE, verbose = TRUE, start_time = 10L, bilateral = FALSE,
-    bf_threshold = 0.135, location_shift = 4, scale_shift = 1, discount_factors =
-    list(polynomial = 0.2, seasonal = 0.8, regressors = 0.8))
+  variance_law = list(type = "identity", power = 1)
 )
 }
 \arguments{
 \item{polynomial}{list. Order of polynomial model.}
 
-\item{seasonal}{list. Components to specify seasonal components.}
+\item{seasonal}{list. Components to specify seasonal model.}
 
-\item{regressor}{list.}
+\item{regressor}{list. Components to specify a dynamic regression model.}
+
+\item{autoregressive}{list. Components to specify a dynamic autoregressive model.}
+
+\item{transfer_function}{list. Components to specify a dynamic transfer function model.}
 
 \item{df_variance}{numeric. Discount factor for observation variance. Use a beta-gamma random walk.}
 
-\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.}
-
-\item{monitor}{list.
+\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
 The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
 }

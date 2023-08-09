@@ -32,7 +32,7 @@ backward_smoother(model, filtering_parameters, ...)
 (\code{a} and \code{R}) and historical posterior moments
 (\code{m} and \code{C}).}
 
-\item{m0, c0}{vector and matrix. posterior mean vector and covariance matrix at time t-1.}
+\item{m0, C0}{vector and matrix. posterior mean vector and covariance matrix at time t-1.}
 
 \item{n, s}{numeric. Prior sample size and mean for the variance, respectively.
 For both parameter the default is 1.}

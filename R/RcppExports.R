@@ -9,11 +9,3 @@ backward_smoother_dlm <- function(F, G_seq, m_seq, a_seq, C_seq, R_seq) {
     .Call(`_RBATS_backward_smoother_dlm`, F, G_seq, m_seq, a_seq, C_seq, R_seq)
 }
 
-update_poisson_dglm <- function(y, F, G, D, a, R) {
-    .Call(`_RBATS_update_poisson_dglm`, y, F, G, D, a, R)
-}
-
-forward_filter_poisson_dglm <- function(y, F, G, D, a, R) {
-    .Call(`_RBATS_forward_filter_poisson_dglm`, y, F, G, D, a, R)
-}
-

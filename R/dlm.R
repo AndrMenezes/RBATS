@@ -9,7 +9,6 @@
 #' @param transfer_function list. Components to specify a dynamic transfer function model.
 #' @param df_variance numeric. Discount factor for observation variance. Use a beta-gamma random walk.
 #' @param variance_law list. Variance law \code{type} and \code{power} parameter.
-#' @param monitor list.
 #' The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
 #' and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.
 #'

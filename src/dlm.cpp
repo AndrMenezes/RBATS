@@ -92,16 +92,16 @@ void update_posterior(arma::vec &m, arma::mat &C,
 
 // [[Rcpp::export]]
 Rcpp::List forward_filter_dlm(arma::vec y,
-                             arma::vec F,
-                             arma::mat G,
-                             arma::mat D,
-                             arma::vec m,
-                             arma::mat C,
-                             double n,
-                             double s,
-                             double df_variance,
-                             int ar_order,
-                             int n_parms){
+                              arma::mat F,
+                              arma::mat G,
+                              arma::mat D,
+                              arma::vec m,
+                              arma::mat C,
+                              double n,
+                              double s,
+                              double df_variance,
+                              int ar_order,
+                              int n_parms){
 
   const int k = y.size();
 
@@ -119,26 +119,29 @@ Rcpp::List forward_filter_dlm(arma::vec y,
 
   arma::vec a = m;
   arma::mat R = C;
+  arma::vec F_t;
 
   for (int t = 0; t < k; ++t) {
-
     // Posterior at time t-1 to prior for time t
     evolve_prior(a, R,
                  m, C,
                  G, D,
                  s, ar_order, n_parms);
 
+    F_t = F.col(t);
+
     // y_t | D_{t-1}
     forecast_marginal(f, q,
-                      F, a, R, s,
+                      F_t,
+                      a, R, s,
                       ar_order);
 
     // (theta_t | D_{t})
     update_posterior(m, C, n, s,
                      y[t], f, q,
-                     a, R, F, df_variance);
+                     a, R, F_t, df_variance);
 
-      // Saving the parameters
+    // Saving the parameters
     f_seq(t) = f;
     q_seq(t) = q;
     m_seq.col(t) = m;
@@ -164,7 +167,7 @@ Rcpp::List forward_filter_dlm(arma::vec y,
 }
 
 // [[Rcpp::export]]
-Rcpp::List backward_smoother_dlm(arma::vec F,
+Rcpp::List backward_smoother_dlm(arma::mat F,
                                  arma::cube G_seq,
                                  arma::mat m_seq,
                                  arma::mat a_seq,
@@ -187,9 +190,8 @@ Rcpp::List backward_smoother_dlm(arma::vec F,
   // Starting values (we need to subtract -1, because it is the index in C++)
   ak_seq.col(T_end - 1) = ak;
   Rk_seq.slice(T_end - 1) = Rk;
-  fk_seq(T_end - 1) = arma::as_scalar(F.t() * ak);
-  qk_seq(T_end - 1) = arma::as_scalar(F.t() * Rk * F);
-
+  fk_seq(T_end - 1) = arma::as_scalar(F.col(0).t() * ak);
+  qk_seq(T_end - 1) = arma::as_scalar(F.col(0).t() * Rk * F.col(0));
 
   // (theta_{t-k} | D_t) for k = 1,..., T - 1 and t = T.
   for (int k = 1; k < T_end; k++){
@@ -197,7 +199,7 @@ Rcpp::List backward_smoother_dlm(arma::vec F,
     // Using {inv_sympd} because is faster than {inv} and R is a covariance matrix (usually p.d.)
 
     // B_{t-k}
-    B_t_k = C_seq.slice(T_end-k-1) * G_seq.slice(T_end-k).t() * arma::inv_sympd(R_seq.slice(T_end-k), arma::inv_opts::allow_approx);
+    B_t_k = C_seq.slice(T_end - k - 1) * G_seq.slice(T_end-k).t() * arma::inv_sympd(R_seq.slice(T_end-k), arma::inv_opts::allow_approx);
 
     // a_t(-k) and R_t(-k)
     ak = m_seq.col(T_end - k - 1) + B_t_k * (ak - a_seq.col(T_end - k));
@@ -206,8 +208,8 @@ Rcpp::List backward_smoother_dlm(arma::vec F,
     // Saving the values
     ak_seq.col(T_end - k - 1) = ak;
     Rk_seq.slice(T_end - k - 1) = Rk;
-    fk_seq(T_end - k - 1) = arma::as_scalar(F.t() * ak);
-    qk_seq(T_end - k - 1) = arma::as_scalar(F.t() * Rk * F);
+    fk_seq(T_end - k - 1) = arma::as_scalar(F.col(T_end - k).t() * ak);
+    qk_seq(T_end - k - 1) = arma::as_scalar(F.col(T_end - k).t() * Rk * F.col(T_end - k));
 
   }
 

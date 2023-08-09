@@ -12,13 +12,13 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // forward_filter_dlm
-Rcpp::List forward_filter_dlm(arma::vec y, arma::vec F, arma::mat G, arma::mat D, arma::vec m, arma::mat C, double n, double s, double df_variance, int ar_order, int n_parms);
+Rcpp::List forward_filter_dlm(arma::vec y, arma::mat F, arma::mat G, arma::mat D, arma::vec m, arma::mat C, double n, double s, double df_variance, int ar_order, int n_parms);
 RcppExport SEXP _RBATS_forward_filter_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP mSEXP, SEXP CSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP ar_orderSEXP, SEXP n_parmsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type F(FSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type G(GSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type D(DSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type m(mSEXP);
@@ -33,12 +33,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // backward_smoother_dlm
-Rcpp::List backward_smoother_dlm(arma::vec F, arma::cube G_seq, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
+Rcpp::List backward_smoother_dlm(arma::mat F, arma::cube G_seq, arma::mat m_seq, arma::mat a_seq, arma::cube C_seq, arma::cube R_seq);
 RcppExport SEXP _RBATS_backward_smoother_dlm(SEXP FSEXP, SEXP G_seqSEXP, SEXP m_seqSEXP, SEXP a_seqSEXP, SEXP C_seqSEXP, SEXP R_seqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type F(FSEXP);
     Rcpp::traits::input_parameter< arma::cube >::type G_seq(G_seqSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type m_seq(m_seqSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type a_seq(a_seqSEXP);

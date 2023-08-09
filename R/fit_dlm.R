@@ -83,21 +83,22 @@ fit.dlm <- function(model, y, m0, C0, n = 1, s = 1, smooth = TRUE, ...) {
 #' @export
 forward_filter.dlm <- function(model, y, m0, C0, n = 1, s = 1, ...) {
 
-  if (is.null(model[["xreg"]])) {
-    out <- forward_filter_dlm(y = y,
-                              F = model[["FF"]],
-                              G = model[["GG"]],
-                              D = model[["D"]],
-                              m = m0,
-                              C = C0,
-                              n = n,
-                              s = s,
-                              df_variance = model[["df_variance"]],
-                              ar_order = model[["ar_order"]],
-                              n_parms = model[["n_parms"]])
-  } else {
-    stop("Not implemented yet")
-  }
+  # Expand the regressor vector to transform into a matrix over time
+  FF <- matrix(rep(model[["FF"]], length(y)), ncol = length(y))
+  if (!is.null(model[["xreg"]]))
+    FF[model$i_regressor, ] <- t(model[["xreg"]])
+
+  out <- forward_filter_dlm(y = y,
+                            F = FF,
+                            G = model[["GG"]],
+                            D = model[["D"]],
+                            m = m0,
+                            C = C0,
+                            n = n,
+                            s = s,
+                            df_variance = model[["df_variance"]],
+                            ar_order = model[["ar_order"]],
+                            n_parms = model[["n_parms"]])
 
   structure(out, class = "dlm.forward_filter")
 }
@@ -106,15 +107,18 @@ forward_filter.dlm <- function(model, y, m0, C0, n = 1, s = 1, ...) {
 #' @export
 backward_smoother.dlm <- function(model, filtering_parameters, ...) {
 
-  if (is.null(model[["xreg"]])) {
-    out <- backward_smoother_dlm(F = model[["FF"]],
-                                 G_seq = filtering_parameters[["G"]],
-                                 m_seq = filtering_parameters[["m"]],
-                                 a_seq = filtering_parameters[["a"]],
-                                 C_seq = filtering_parameters[["C"]],
-                                 R_seq = filtering_parameters[["R"]])
-  } else {
-    stop("Not implemented yet")
-  }
+  # Expand the regressor vector to transform into a matrix over time
+  FF <- matrix(rep(model[["FF"]], ncol(filtering_parameters[["a"]])),
+               ncol = ncol(filtering_parameters[["a"]]))
+  if (!is.null(model[["xreg"]]))
+    FF[model[["i_regressor"]], ] <- t(model[["xreg"]])
+
+  out <- backward_smoother_dlm(F = FF,
+                               G_seq = filtering_parameters[["G"]],
+                               m_seq = filtering_parameters[["m"]],
+                               a_seq = filtering_parameters[["a"]],
+                               C_seq = filtering_parameters[["C"]],
+                               R_seq = filtering_parameters[["R"]])
+
   structure(out, class = "dlm.backward_smoother")
 }

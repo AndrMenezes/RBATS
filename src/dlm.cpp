@@ -77,13 +77,14 @@ void update_posterior(arma::vec &m, arma::mat &C,
 
     double e = y - f;
     arma::vec A = (R * F) / q;
-    double r = (df_variance * n + e * e / q) / (df_variance * (n + 1));
+    double r = (n + e * e / q) / (n + 1);
 
     // Kalman filter update
     m = a + A * e;
     C = r * (R - q * A * A.t());
     s *= r;
     n++;
+    n *= df_variance;
   }
 
 

@@ -29,7 +29,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                 df_variance = 1,
                 variance_law = list(type = "identity", power = 1)) {
 
-  if (missing(polynomial) & missing(autoregressive)) {
+  if (missing(polynomial) & missing(autoregressive) & missing(regressor)) {
     polynomial <- list(order = 1L, discount_factor = 0.95)
     warning("The default model is the local-level with discount factor 0.95")
   }
@@ -75,14 +75,19 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   if (!is.null(regressor[["xreg"]])) {
     mod_reg <- .regression_model(X = regressor[["xreg"]],
                                  discount_factors = regressor[["discount_factor"]])
-    # Index of the regressor components
-    mod[["i_regressor"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + ncol(mod_reg[["xreg"]]))
-    # Superposition
-    mod[["xreg"]] <- mod_reg[["xreg"]]
-    mod[["FF"]] <- rbind(mod[["FF"]], mod_reg[["FF"]])
-    mod[["GG"]] <- .bdiag(mod[["GG"]], mod_reg[["GG"]])
-    mod[["D"]] <- .bdiag_one(mod[["D"]], mod_reg[["D"]])
-    comp_names <- c(comp_names, colnames(mod_reg[["GG"]]))
+    if (missing(polynomial)) {
+      mod <- mod_reg
+      comp_names <- rownames(mod[["FF"]])
+    } else {
+      # Index of the regressor components
+      mod[["i_regressor"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + ncol(mod_reg[["xreg"]]))
+      # Superposition
+      mod[["xreg"]] <- mod_reg[["xreg"]]
+      mod[["FF"]] <- rbind(mod[["FF"]], mod_reg[["FF"]])
+      mod[["GG"]] <- .bdiag(mod[["GG"]], mod_reg[["GG"]])
+      mod[["D"]] <- .bdiag_one(mod[["D"]], mod_reg[["D"]])
+      comp_names <- c(comp_names, colnames(mod_reg[["GG"]]))
+    }
   }
 
   # Create autoregressive components

@@ -78,6 +78,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
     if (missing(polynomial)) {
       mod <- mod_reg
       comp_names <- rownames(mod[["FF"]])
+      mod[["i_regressor"]] <- 1:nrow(mod[["FF"]])
     } else {
       # Index of the regressor components
       mod[["i_regressor"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + ncol(mod_reg[["xreg"]]))

@@ -122,7 +122,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   mod[["polynomial_order"]] <- if (missing(polynomial)) NULL else polynomial[["order"]]
   mod[["ar_order"]] <- if (missing(autoregressive)) 0 else autoregressive[["order"]]
   mod[["tf_order"]] <- if (missing(transfer_function)) 0 else transfer_function[["order"]]
-  mod[["seasonal"]] <- seasonal
+  mod[["seasonal"]] <- if (missing(seasonal)) NULL else seasonal
   mod[["parameters_names"]] <- comp_names
   mod[["n_parms"]] <- length(comp_names) - 2*mod[["ar_order"]] - 2*mod[["tf_order"]]
   mod[["loglik"]] <- 0

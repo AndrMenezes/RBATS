@@ -32,7 +32,6 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
   # Model info
   y <- x$y
   df_variance <- x$model$df_variance
-  seas_type <- x$model$seasonal$type
 
   # Template
   data_out <- data.frame(t = seq_along(y), y = y, distribution = distribution)
@@ -57,7 +56,7 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
       list_to_append[[j]] <- data_out
     }
     # Compute the sum of all seasonal effects
-    if (seas_type != "none") {
+    if (!is.null(x$model$seasonal)) {
       i_seas <- x$model$i_seasonal
       F_seas <- x$model$FF[i_seas, ,drop = FALSE]
       m <- if (distribution == "filter") x$filtered$m[i_seas, ] else x$smoothed$ak[i_seas, ]

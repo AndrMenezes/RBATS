@@ -100,6 +100,39 @@
   list(xreg = X, FF = FF, GG = GG, D = D)
 }
 
+.cycle_model <- function(freq, discount_factors = 0.98) {
+
+  p <- length(freq)
+  n <- 2*p
+  i_min <- seq.int(1, by = 2, length.out = p)
+  i_max <- seq.int(2, by = 2, length.out = p)
+  comp_names <- c()
+  for (f in freq) {
+    comp_names <- c(comp_names, paste0(
+      "frequency_{", f, "}__", c("xi_1", "xi_2")) )
+  }
+
+  FF <- matrix(rep(c(1, 0), times = p))
+  GG <- matrix(data = 0, nrow = n, ncol = n)
+  for (j in seq_len(p)) {
+    cs <- cos(freq[j])
+    sn <- sin(freq[j])
+    i_row <- i_min[j]:i_max[j]
+    GG[i_row, i_row] <- matrix(c(cs, -sn, sn, cs), nrow = 2, ncol = 2)
+  }
+
+  discount_factors_cov <- if (length(discount_factors) == n) 1 else discount_factors[1L]
+  D <- diag(1/discount_factors, ncol = n, nrow = n)
+  D[which(D != diag(D))] <- 1/discount_factors_cov
+
+  colnames(GG) <- rownames(GG) <- comp_names
+  colnames(D) <- rownames(D) <- comp_names
+  rownames(FF) <- comp_names
+
+  list(FF = FF, GG = GG, D = D)
+
+}
+
 .autoregressive_model <- function(order, discount_factors) {
   FF <- matrix(c(1, rep(0, 2 * order - 1)), ncol = 1L)
 

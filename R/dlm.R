@@ -6,6 +6,7 @@
 #' @param seasonal list. Components to specify seasonal model.
 #' @param regressor list. Components to specify a dynamic regression model.
 #' @param autoregressive list. Components to specify a dynamic autoregressive model.
+#' @param cycle list. Components to specify a dynamic cycle model.
 #' @param transfer_function list. Components to specify a dynamic transfer function model.
 #' @param df_variance numeric. Discount factor for observation variance. Use a beta-gamma random walk.
 #' @param variance_law list. Variance law \code{type} and \code{power} parameter.
@@ -25,11 +26,12 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                                 discount_factor = 0.98),
                 regressor = list(xreg = NULL, discount_factor = 0.99),
                 autoregressive = list(order = NULL, discount_factor = 0.998),
+                cycle = list(frequency = NULL, discount_factor = 0.998),
                 transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
                 df_variance = 1,
                 variance_law = list(type = "identity", power = 1)) {
 
-  if (missing(polynomial) & missing(autoregressive) & missing(regressor)) {
+  if (missing(polynomial) & missing(autoregressive) & missing(regressor) & missing(cycle) & missing(seasonal)) {
     polynomial <- list(order = 1L, discount_factor = 0.95)
     warning("The default model is the local-level with discount factor 0.95")
   }
@@ -75,7 +77,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   if (!is.null(regressor[["xreg"]])) {
     mod_reg <- .regression_model(X = regressor[["xreg"]],
                                  discount_factors = regressor[["discount_factor"]])
-    if (missing(polynomial)) {
+    if (missing(polynomial) & missing(autoregressive)) {
       mod <- mod_reg
       comp_names <- rownames(mod[["FF"]])
       mod[["i_regressor"]] <- 1:nrow(mod[["FF"]])
@@ -91,12 +93,31 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
     }
   }
 
+  # Create cycle component
+  if (!is.null(cycle[["freq"]])) {
+    mod_cycle <- .cycle_model(freq = cycle[["freq"]],
+                              discount_factors = cycle[["discount_factor"]])
+    if (missing(polynomial) & missing(autoregressive) & missing(regressor)) {
+      mod <- mod_cycle
+      comp_names <- rownames(mod[["FF"]])
+      mod[["i_cycle"]] <- 1:nrow(mod[["FF"]])
+    } else {
+      # Index of the cycle components
+      mod[["i_cycle"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + nrow(mod_cycle[["FF"]]))
+      # Superposition
+      mod[["FF"]] <- rbind(mod[["FF"]], mod_cycle[["FF"]])
+      mod[["GG"]] <- .bdiag(mod[["GG"]], mod_cycle[["GG"]])
+      mod[["D"]] <- .bdiag_one(mod[["D"]], mod_cycle[["D"]])
+      comp_names <- c(comp_names, colnames(mod_cycle[["GG"]]))
+    }
+  }
+
   # Create autoregressive components
   if (!is.null(autoregressive[["order"]])) {
     mod_autoreg <- .autoregressive_model(order = autoregressive[["order"]],
                                          discount_factors = autoregressive[["discount_factor"]])
 
-    if (missing(polynomial)) {
+    if (missing(polynomial) & missing(regressor)) {
       mod <- mod_autoreg
       comp_names <- rownames(mod[["FF"]])
     } else {

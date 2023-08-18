@@ -93,3 +93,18 @@ test_that("dlm with trend + seasonal + regression + autoregressive",{
   expect_equal(m1$i_autoregressive, 6L:9L)
 
 })
+
+test_that("dlm with cycle",{
+
+  (m1 <- dlm(cycle = list(freq = 2.5, discount_factor = 0.998)))
+  expect_equal(nrow(m1$GG), 2L)
+  expect_equal(m1$i_cycle, 1:2)
+
+  (m2 <- dlm(
+    polynomial = list(order = 2, discount_factor = 0.95),
+    cycle = list(freq = 2.5, discount_factor = 0.998)))
+  expect_equal(nrow(m2$GG), 4L)
+  expect_equal(m2$i_cycle, 3:4)
+
+})
+

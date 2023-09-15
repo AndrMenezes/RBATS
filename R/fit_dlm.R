@@ -88,6 +88,9 @@ forward_filter.dlm <- function(model, y, m0, C0, n = 1, s = 1, ...) {
   if (!is.null(model[["xreg"]]))
     FF[model$i_regressor, ] <- t(model[["xreg"]])
 
+  # Check if there is transfer function component, if not create an empty zero vector
+  model[["xreg_tf"]] <- if (is.null(model[["xreg_tf"]])) rep(0, length(y)) else model[["xreg_tf"]]
+
   out <- forward_filter_dlm(y = y,
                             F = FF,
                             G = model[["GG"]],
@@ -97,8 +100,13 @@ forward_filter.dlm <- function(model, y, m0, C0, n = 1, s = 1, ...) {
                             n = n,
                             s = s,
                             df_variance = model[["df_variance"]],
+                            n_parms = model[["n_parms"]],
                             ar_order = model[["ar_order"]],
-                            n_parms = model[["n_parms"]])
+                            tf_order = model[["tf_order"]],
+                            i_ar = model[["i_autoregressive"]] - 1L,
+                            i_tf = model[["i_transfer_function"]] - 1L,
+                            xreg_tf = model[["xreg_tf"]]
+                            )
 
   structure(out, class = "dlm.forward_filter")
 }

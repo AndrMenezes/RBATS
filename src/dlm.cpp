@@ -4,7 +4,13 @@ void evolve_prior(arma::vec &a, arma::mat &R,
                   arma::vec &m, arma::mat &C,
                   arma::mat &G, arma::mat &D,
                   double &s,
-                  int &ar_order, int &n_parms) {
+                  int &n_parms,
+                  int &ar_order,
+                  int &tf_order,
+                  Rcpp::IntegerVector &i_ar,
+                  Rcpp::IntegerVector &i_tf,
+                  double &x_tf
+                    ) {
 
   a = m;
 
@@ -14,23 +20,50 @@ void evolve_prior(arma::vec &a, arma::mat &R,
     a.subvec(0, n_parms - 1) = G.submat(0, 0, n_parms - 1, n_parms - 1) * m.subvec(0, n_parms - 1);
   }
 
+  // Evolution for the autoregressive components
   if (ar_order > 0) {
-    // First component of AR
-    a.subvec(n_parms, n_parms) = m.subvec(n_parms, n_parms + ar_order - 1).t() * m.subvec(n_parms + ar_order, n_parms + 2 * ar_order - 1);
+    // First component of AR ( sum_{i=1}^p phi_{i} xi_i )
+    a.subvec(i_ar(0), i_ar(0)) = (
+      m.subvec(i_ar(0), i_ar(ar_order - 1)).t()
+    * m.subvec(i_ar(ar_order), i_ar(2 * ar_order - 1)));
 
-    // 2, ..., order-th elements
+    // Changing the elements of xi_{2, ..., order} elements
     for (int j=0; j < ar_order - 1; j++) {
-      a(n_parms + j + 1) = m(n_parms + j);
+      a(i_ar(j + 1)) = m(i_ar(j));
     }
-    // if (ar_order > 1) {
-    //   a.subvec(n_parms + 1, n_parms + ar_order - 1) = m.subvec(n_parms, n_parms + ar_order - 2);
-    // }
 
     // Changing the nonlinear part of G
     for (int j=0; j < ar_order; j++) {
-      G(n_parms, n_parms + j) = m(n_parms + j + ar_order);
-      G(n_parms, n_parms + j + ar_order) = m(n_parms + j);
+      // xi_1 to xi_order
+      G(i_ar(0), i_ar(j)) = m(i_ar(j + ar_order));
+      // phi_1 to phi_order
+      G(i_ar(0), i_ar(j + ar_order)) = m(i_ar(j));
     }
+
+  }
+
+  // Evolution for the transfer function components
+  if (tf_order > 0) {
+    // First component of AR ( sum_{i=1}^p lambda_{i} E_i + psi * x)
+    a.subvec(i_tf(0), i_tf(0)) = (
+      m.subvec(i_tf(0), i_tf(tf_order - 1)).t()
+    * m.subvec(i_tf(tf_order), i_tf(2 * tf_order - 1))
+    + m(i_tf(2 * tf_order)) * x_tf);
+
+    // Changing the elements of E_{2, ..., order} elements
+    for (int j=0; j < tf_order - 1; j++) {
+      a(i_tf(j + 1)) = m(i_tf(j));
+    }
+
+    // Changing the nonlinear part of G
+    for (int j=0; j < tf_order; j++) {
+      // E_1 to E_order
+      G(i_tf(0), i_tf(j)) = m(i_tf(j + tf_order));
+      // lambda_1 to lambda_order
+      G(i_tf(0), i_tf(j + tf_order)) = m(i_tf(j));
+    }
+    // derivative w.r.t psi is X_t
+    G(i_tf(0), i_tf(2 * tf_order)) = x_tf;
 
   }
 
@@ -41,7 +74,7 @@ void evolve_prior(arma::vec &a, arma::mat &R,
   R %= D;
 
   if (ar_order > 0) {
-    R(n_parms, n_parms) += s;
+    R(i_ar(0), i_ar(0)) += s;
   }
 
   // Make sure the covariance matrix is symmetric
@@ -101,8 +134,12 @@ Rcpp::List forward_filter_dlm(arma::vec y,
                               double n,
                               double s,
                               double df_variance,
+                              int n_parms,
                               int ar_order,
-                              int n_parms){
+                              int tf_order,
+                              Rcpp::IntegerVector i_ar,
+                              Rcpp::IntegerVector i_tf,
+                              Rcpp::NumericVector xreg_tf){
 
   const int k = y.size();
 
@@ -116,18 +153,25 @@ Rcpp::List forward_filter_dlm(arma::vec y,
   arma::vec s_seq(k, arma::fill::zeros);
   arma::vec n_seq(k, arma::fill::zeros);
 
-  double f = 0, q = 1;
+  double f = 0, q = 1, x_tf = 0;
 
   arma::vec a = m;
   arma::mat R = C;
   arma::vec F_t;
 
   for (int t = 0; t < k; ++t) {
+
+    x_tf = xreg_tf(t);
     // Posterior at time t-1 to prior for time t
     evolve_prior(a, R,
                  m, C,
                  G, D,
-                 s, ar_order, n_parms);
+                 s, n_parms,
+                 ar_order,
+                 tf_order,
+                 i_ar,
+                 i_tf,
+                 x_tf);
 
     F_t = F.col(t);
 

@@ -26,14 +26,15 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                                 discount_factor = 0.98),
                 regressor = list(xreg = NULL, discount_factor = 0.99),
                 autoregressive = list(order = NULL, discount_factor = 0.998),
-                cycle = list(frequency = NULL, discount_factor = 0.998),
+                cycle = list(frequency = NULL, rho = NULL, discount_factor = 0.998),
                 transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
                 df_variance = 1,
                 variance_law = list(type = "identity", power = 1)) {
 
-  if (missing(polynomial) & missing(autoregressive) & missing(regressor) & missing(cycle) & missing(seasonal)) {
+  if (missing(polynomial) & missing(seasonal) & missing(regressor) &
+      missing(autoregressive) & missing(cycle) & missing(transfer_function)) {
     polynomial <- list(order = 1L, discount_factor = 0.95)
-    warning("The default model is the local-level with discount factor 0.95")
+    warning("The default model is the local level with discount factor 0.95")
   }
 
   if (!missing(polynomial)) {
@@ -77,7 +78,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   if (!is.null(regressor[["xreg"]])) {
     mod_reg <- .regression_model(X = regressor[["xreg"]],
                                  discount_factors = regressor[["discount_factor"]])
-    if (missing(polynomial) & missing(autoregressive)) {
+    if (missing(polynomial) & missing(seasonal)) {
       mod <- mod_reg
       comp_names <- rownames(mod[["FF"]])
       mod[["i_regressor"]] <- 1:nrow(mod[["FF"]])
@@ -95,7 +96,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
 
   # Create cycle component
   if (!is.null(cycle[["freq"]])) {
-    mod_cycle <- .cycle_model(freq = cycle[["freq"]],
+    mod_cycle <- .cycle_model(freq = cycle[["freq"]], rho = cycle[["rho"]],
                               discount_factors = cycle[["discount_factor"]])
     if (missing(polynomial) & missing(autoregressive) & missing(regressor)) {
       mod <- mod_cycle
@@ -120,6 +121,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
     if (missing(polynomial) & missing(regressor)) {
       mod <- mod_autoreg
       comp_names <- rownames(mod[["FF"]])
+      mod[["i_autoregressive"]] <- 1:nrow(mod[["FF"]])
     } else {
       # Index of the autoregressive components
       mod[["i_autoregressive"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + nrow(mod_autoreg[["FF"]]))
@@ -133,6 +135,32 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
 
   }
 
+  # Create transfer function component
+  if (!is.null(transfer_function[["order"]])) {
+    mod_tf <- .transfer_function_model(order = transfer_function[["order"]],
+                                       X = transfer_function[["xreg"]],
+                                       discount_factors = transfer_function[["discount_factor"]])
+
+    if (!exists("mod", environment(), inherits = FALSE)) {
+      mod <- mod_tf
+      comp_names <- rownames(mod[["FF"]])
+      mod[["i_transfer_function"]] <- 1:nrow(mod[["FF"]])
+    } else {
+      # Index of the transfer function components
+      mod[["i_transfer_function"]] <- (nrow(mod[["FF"]]) + 1):(nrow(mod[["FF"]]) + nrow(mod_tf[["FF"]]))
+
+      # Superposition
+      mod[["FF"]] <- rbind(mod[["FF"]], mod_tf[["FF"]])
+      mod[["GG"]] <- .bdiag(mod[["GG"]], mod_tf[["GG"]])
+      mod[["D"]] <- .bdiag_one(mod[["D"]], mod_tf[["D"]])
+      # Appending the component names
+      comp_names <- c(comp_names, colnames(mod_tf[["GG"]]))
+    }
+    # Covariate for the transfer function
+    mod[["xreg_tf"]] <- mod_tf[["xreg"]]
+
+  }
+
   colnames(mod[["GG"]]) <- rownames(mod[["GG"]]) <- comp_names
 
   # Discount factor and law for the observational variance
@@ -141,9 +169,19 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
 
   # Additional information
   mod[["polynomial_order"]] <- if (missing(polynomial)) NULL else polynomial[["order"]]
+  mod[["seasonal"]] <- if (missing(seasonal)) NULL else seasonal
+
   mod[["ar_order"]] <- if (missing(autoregressive)) 0 else autoregressive[["order"]]
   mod[["tf_order"]] <- if (missing(transfer_function)) 0 else transfer_function[["order"]]
-  mod[["seasonal"]] <- if (missing(seasonal)) NULL else seasonal
+
+
+  # Fill the index of each component
+  mod[["i_cycle"]] <- if (is.null(mod[["i_cycle"]])) 0 else mod[["i_cycle"]]
+  mod[["i_autoregressive"]] <- if (is.null(mod[["i_autoregressive"]])) 0 else mod[["i_autoregressive"]]
+  mod[["i_transfer_function"]] <- if (is.null(mod[["i_transfer_function"]])) 0 else mod[["i_transfer_function"]]
+  mod[["i_transfer_function"]] <- if (is.null(mod[["i_transfer_function"]])) 0 else mod[["i_transfer_function"]]
+
+
   mod[["parameters_names"]] <- comp_names
   mod[["n_parms"]] <- length(comp_names) - 2*mod[["ar_order"]] - 2*mod[["tf_order"]]
   mod[["loglik"]] <- 0

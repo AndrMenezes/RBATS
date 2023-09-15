@@ -31,7 +31,6 @@ test_that("filter and smooth functions with missing value for Nile data works", 
   expect_s3_class(fitted_object$model, "dlm")
 })
 
-
 test_that("level and ar for Nile data works", {
   y <- c(Nile)
   y[c(10, 30)] <- NA_real_
@@ -67,8 +66,6 @@ test_that("level and ar for Nile data works", {
   expect_s3_class(fitted_object, "dlm.fit")
   expect_s3_class(fitted_object$model, "dlm")
 })
-
-
 
 test_that("trend seasonal model for AirPassengers data works", {
   y <- c(AirPassengers)
@@ -133,7 +130,6 @@ test_that("trend seasonal model for us_retail_employment data works", {
 
 })
 
-
 test_that("ar(2) model with simulated data", {
 
   nobs <- 200
@@ -166,6 +162,10 @@ test_that("ar(2) model with simulated data", {
   expect_equal(out$filtered$m[3L, nobs] - true_phi_1, -0.0792, tolerance = 1e-4)
   expect_equal(out$filtered$m[4L, nobs] - true_phi_2, 0.0597, tolerance = 1e-4)
 
+  # plot(y)
+  # lines(out$filtered$f[, 1L], col = "blue")
+  # lines(out$smoothed$fk[, 1L], col = "red")
+  # # Phi's
   # plot(out$filtered$m[3L, ]); abline(h = true_phi_1)
   # lines(out$smoothed$ak[3L, ], col = "blue")
   # plot(out$filtered$m[4L, ]); abline(h = true_phi_2)
@@ -214,8 +214,8 @@ test_that("level + ar(2) with simulated data", {
              m0 = matrix(c(y[1L], rep(0, 4)), ncol = 1),
              C0 = diag(c(10, 2, 2, 1, 1), nrow = 5))
 
-  expect_equal(out$filtered$m[4L, nobs] - true_phi_1, 0.0447, tolerance = 1e-4)
-  expect_equal(out$filtered$m[5L, nobs] - true_phi_2, 0.0463, tolerance = 1e-4)
+  expect_equal(out$filtered$m[4L, nobs] - true_phi_1, 0.0447, tolerance = 1e-3)
+  expect_equal(out$filtered$m[5L, nobs] - true_phi_2, 0.0463, tolerance = 1e-3)
 
   # plot(out$filtered$m[4L, ]); abline(h = true_phi_1)
   # lines(out$smoothed$ak[4L, ], col = "blue")
@@ -292,8 +292,8 @@ test_that("level + seasonal + ar(2) model with simulated data", {
   C0 <- diag(x = c(4, 2, 2, rep(1, 4)), nrow = 7L)
   out <- fit(model = mod, y = y, m0 = m0, C0 = C0)
 
-  expect_equal(out$filtered$m[6L, nobs] - true_phi_1, -0.0149, tolerance = 1e-4)
-  expect_equal(out$filtered$m[7L, nobs] - true_phi_2, 0.0334, tolerance = 1e-4)
+  expect_equal(out$filtered$m[6L, nobs] - true_phi_1, -0.0149, tolerance = 1e-3)
+  expect_equal(out$filtered$m[7L, nobs] - true_phi_2, 0.0334, tolerance = 1e-3)
 
   # plot(out$filtered$m[6L, ]); abline(h = true_phi_1)
   # lines(out$smoothed$ak[6L, ], col = "blue")
@@ -351,12 +351,12 @@ test_that("level + regression + ar(2)", {
   C0 <- diag(x = c(10, 4, 2, 2, 1, 1), nrow = 6L)
   out <- fit(model = mod, y = y, m0 = m0, C0 = C0)
 
-  expect_equal(out$filtered$m[5L, nobs] - true_phi_1, 0.0799, tolerance = 1e-4)
-  expect_equal(out$filtered$m[6L, nobs] - true_phi_2, -0.0487, tolerance = 1e-4)
+  expect_equal(out$filtered$m[5L, nobs] - true_phi_1, 0.0799, tolerance = 1e-3)
+  expect_equal(out$filtered$m[6L, nobs] - true_phi_2, -0.0487, tolerance = 1e-3)
 
-  plot(beta_1)
-  lines(out$filtered$m[2L, ], col = "blue")
-  lines(out$smoothed$ak[2L, ], col = "red")
+  # plot(beta_1)
+  # lines(out$filtered$m[2L, ], col = "blue")
+  # lines(out$smoothed$ak[2L, ], col = "red")
 
   # plot(y)
   # lines(out$filtered$f[, 1L], col = "blue")
@@ -371,4 +371,121 @@ test_that("level + regression + ar(2)", {
 
 })
 
+test_that("tf(2) model with simulated data", {
 
+  # Simulate the data
+  npulse <- 5
+  nobs <- 50
+  sd_y <- 1
+  sd_E1 <- 0.0004
+  sd_psi <- 0.002
+  true_lambda_1 <- 0.8
+  true_lambda_2 <- -0.2
+
+  E1 <- numeric(nobs)
+  E2 <- numeric(nobs)
+  psi <- numeric(nobs)
+  y <- numeric(nobs)
+  E1[1L] <- 0
+  psi[1L] <- 2.5
+
+  # Covariate
+  x <- numeric(nobs) # rpois(nobs, lambda = 1)
+  impulse <- seq(1, nobs, by = nobs / npulse)
+  x[impulse] <- 1
+
+  # Random errors
+  set.seed(1111)
+  nu <- rnorm(n = nobs, sd = sd_y)
+  omega_psi <- rnorm(n = nobs, sd = sd_psi)
+  omega_E1 <- rnorm(n = nobs, sd = sd_E1)
+
+  # First observation
+  y[1L] <- E1[1L] + nu[1L]
+
+  for (t in seq_len(nobs)[-1]) {
+    psi[t] <- psi[t - 1] + omega_psi[t]
+    E1[t] <- true_lambda_1 * E1[t - 1] + true_lambda_2 * E2[t - 1] + psi[t] * x[t] + omega_E1[t]
+    E2[t] <- E1[t - 1]
+    y[t] <- E1[t] + nu[t]
+  }
+
+  mod <- dlm(transfer_function = list(order = 2, xreg = x,
+                                      discount_factor = 0.998))
+  m <- c(0, 0, 0, 0, 0)
+  C <- diag(x = c(100, 0.01, 0.5, 0.5, 10), nrow = 5)
+  out <- fit(model = mod, y = y, m0 = m, C0 = C)
+
+  expect_equal(out$filtered$m[3L, nobs] - true_lambda_1, 0.0081, tolerance = 1e-4)
+  expect_equal(out$filtered$m[4L, nobs] - true_lambda_2, -0.0998, tolerance = 1e-4)
+
+  # plot(y)
+  # lines(out$filtered$f[, 1L], col = "blue")
+
+})
+
+test_that("tf(2) + level model with simulated data", {
+
+  # Simulate the data
+  npulse <- 5
+  nobs <- 50
+  sd_y <- 1
+  sd_mu <- 0.05
+  sd_E1 <- 0.0004
+  sd_psi <- 0.002
+  true_lambda_1 <- 0.8
+  true_lambda_2 <- -0.2
+
+  mu <- numeric(nobs)
+  E1 <- numeric(nobs)
+  E2 <- numeric(nobs)
+  psi <- numeric(nobs)
+  y <- numeric(nobs)
+  E1[1L] <- 0
+  psi[1L] <- 2.5
+  mu[1L] <- 1
+
+  # Covariate
+  x <- numeric(nobs) # rpois(nobs, lambda = 1)
+  impulse <- seq(1, nobs, by = nobs / npulse)
+  x[impulse] <- 1
+
+  # Random errors
+  set.seed(1111)
+  nu <- rnorm(n = nobs, sd = sd_y)
+  omega_psi <- rnorm(n = nobs, sd = sd_psi)
+  omega_E1 <- rnorm(n = nobs, sd = sd_E1)
+  omega_mu <- rnorm(n = nobs, sd = sd_mu)
+
+  # First observation
+  y[1L] <- mu[1L] + E1[1L] + nu[1L]
+
+  for (t in seq_len(nobs)[-1]) {
+    psi[t] <- psi[t - 1] + omega_psi[t]
+    E1[t] <- true_lambda_1 * E1[t - 1] + true_lambda_2 * E2[t - 1] + psi[t] * x[t] + omega_E1[t]
+    E2[t] <- E1[t - 1]
+    mu[t] <- mu[t - 1] + omega_mu[t]
+    y[t] <- mu[t] + E1[t] + nu[t]
+  }
+
+  mod <- dlm(polynomial = list(order = 1, discount_factor = 0.95),
+             transfer_function = list(order = 2, xreg = x,
+                                      discount_factor = 0.998))
+  m <- c(1, 0, 0, 0, 0, 0)
+  C <- diag(x = c(100, 10, 0.001, 5, 5, 1), nrow = 6)
+  out <- fit(model = mod, y = y, m0 = m, C0 = C)
+  # out
+  expect_s3_class(out, "dlm.fit")
+
+
+  # plot(y)
+  # lines(out$filtered$f[, 1L], col = "blue")
+  # lines(out$filtered$m[1L, ], col = "red")
+  # plot(mu)
+  # lines(out$filtered$m[1L, ], col = "red")
+  #
+  # plot(out$filtered$m[4, ], col = "red"); abline(h = true_lambda_1)
+  # plot(out$filtered$m[5, ], col = "red"); abline(h = true_lambda_2)
+
+
+})

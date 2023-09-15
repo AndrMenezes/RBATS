@@ -94,6 +94,38 @@ test_that("dlm with trend + seasonal + regression + autoregressive",{
 
 })
 
+test_that("dlm with transfer function", {
+  devtools::load_all()
+  m <- dlm(
+    transfer_function = list(order = 2, xreg = matrix(rnorm(10), ncol = 1),
+                             discount_factor = 0.998)
+  )
+  expect_equal(unname(m$FF), matrix(c(1, rep(0, 4)), ncol = 1))
+  expect_equal(unname(m$GG),
+               matrix(c(rep(NA, 5),
+                        c(1, rep(0, 4)),
+                        c(rep(0, 2), 1, rep(0, 2)),
+                        c(rep(0, 3), 1, 0),
+                        c(rep(0, 4), 1)), ncol = 5, byrow = T))
+
+  # Several components + transfer function
+  (m1 <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.95),
+    seasonal = list(type = "fourier", period = 3, harmonics = 1,
+                    discount_factor = 0.98),
+    autoregressive = list(order = 2, discount_factor = 0.998),
+    transfer_function = list(order = 2, xreg = matrix(rnorm(10), ncol = 1),
+                             discount_factor = 0.998)
+  ))
+  expect_equal(m1$i_polynomial, 1L)
+  expect_equal(m1$i_seasonal, c(2L, 3L))
+  expect_equal(m1$i_autoregressive, 4L:7L)
+  expect_equal(m1$i_transfer_function, 8L:12L)
+  expect_equal(nrow(m1$FF), 12)
+  expect_equal(dim(m1$GG), c(12, 12))
+
+})
+
 test_that("dlm with cycle",{
 
   (m1 <- dlm(cycle = list(freq = 2.5, discount_factor = 0.998)))
@@ -102,7 +134,7 @@ test_that("dlm with cycle",{
 
   (m2 <- dlm(
     polynomial = list(order = 2, discount_factor = 0.95),
-    cycle = list(freq = 2.5, discount_factor = 0.998)))
+    cycle = list(freq = 2.5, discount_factor = 0.998, rho = 0.90)))
   expect_equal(nrow(m2$GG), 4L)
   expect_equal(m2$i_cycle, 3:4)
 

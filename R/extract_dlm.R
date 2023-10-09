@@ -40,7 +40,7 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
   if (component == "response") {
     data_out$mean <- if (distribution == "filter") x$filtered$f[, 1L] else x$smoothed$fk[, 1L]
     data_out$variance <- if (distribution == "filter") x$filtered$q[, 1L] else x$smoothed$qk[, 1L]
-    data_out$degrees_freedom <- df_variance * (x$filtered$n - 1)
+    data_out$degrees_freedom <- c(df_variance * x$n0, x$filtered$n[-length(y)])
   }
 
   # State parameters

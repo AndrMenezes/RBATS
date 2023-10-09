@@ -63,16 +63,18 @@ fit.dlm <- function(model, y, m0, C0, n = 1, s = 1, smooth = TRUE, ...) {
                                C = filtered[["C"]][, , t_end],
                                n = filtered[["n"]][t_end],
                                s = filtered[["s"]][t_end])
+  model[["m0"]]
   # Predictive log-likelihood
   s_q <- sqrt(filtered[["q"]][, 1L])
   e <- y - filtered[["f"]][, 1L]
-  dof <- model[["df_variance"]] * (filtered[["n"]] - 1)
+  dof <- c(model[["df_variance"]] * n, filtered[["n"]][-length(y)])
   model["loglik"] <- sum(log(dt(x = e / s_q, df = dof) / s_q))
   model["time"] <- t_end
 
   # Return an object of class fit.dlm
   structure(list(model = model, y = y,
                  filtered = filtered, smoothed = smoothed,
+                 n0 = n,
                  call = match.call()),
             class = "dlm.fit")
 

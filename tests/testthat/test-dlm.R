@@ -95,11 +95,15 @@ test_that("dlm with trend + seasonal + regression + autoregressive",{
 })
 
 test_that("dlm with transfer function", {
-  devtools::load_all()
+  # devtools::load_all()
   m <- dlm(
     transfer_function = list(order = 2, xreg = matrix(rnorm(10), ncol = 1),
                              discount_factor = 0.998)
   )
+
+  expect_equal(m$n_parms , 0L)
+  expect_equal(m$tf_order , 2)
+  expect_equal(m$i_transfer_function , 1:5)
   expect_equal(unname(m$FF), matrix(c(1, rep(0, 4)), ncol = 1))
   expect_equal(unname(m$GG),
                matrix(c(rep(NA, 5),
@@ -123,6 +127,30 @@ test_that("dlm with transfer function", {
   expect_equal(m1$i_transfer_function, 8L:12L)
   expect_equal(nrow(m1$FF), 12)
   expect_equal(dim(m1$GG), c(12, 12))
+
+
+  # Several components + TF(1) with fixed value for lambda
+  m <- dlm(
+    transfer_function = list(order = 1, xreg = matrix(rnorm(10), ncol = 1),
+                             lambda = 0.5, discount_factor = 0.998)
+  )
+  expect_equal(m$fixed_tf_parm, 1)
+  expect_equal(m$n_parms, 0)
+  expect_equal(nrow(m$FF), 2)
+
+  # TF(1) with fixed value for lambda
+  m <- dlm(
+    polynomial = list(order = 1, discount_factor = 0.95),
+    seasonal = list(type = "fourier", period = 3, harmonics = 1,
+                    discount_factor = 0.98),
+    autoregressive = list(order = 2, discount_factor = 0.998),
+    transfer_function = list(order = 1, xreg = matrix(rnorm(10), ncol = 1),
+                             lambda = 0.5, discount_factor = 0.998)
+  )
+  expect_equal(m$i_transfer_function, c(8, 9))
+  expect_equal(m$fixed_tf_parm, 1)
+  expect_equal(m$n_parms, 3)
+
 
 })
 

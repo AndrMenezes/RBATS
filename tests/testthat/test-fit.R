@@ -371,7 +371,76 @@ test_that("level + regression + ar(2)", {
 
 })
 
-test_that("tf(2) model with simulated data", {
+test_that("TF(1) for simulated data", {
+
+
+  devtools::load_all()
+  n_obs <- 100
+  sd_y <- 1
+  sd_E <- 0.02
+  sd_psi <- 0.002
+  lambda <- 0.7
+
+
+  E <- numeric(n_obs)
+  psi <- numeric(n_obs)
+  y <- numeric(n_obs)
+  E[1L] <- 0
+  psi[1L] <- 2.5
+
+  # Covariate
+  set.seed(1111)
+  x <- rweibull(n_obs, 2, 0.4)
+
+  # Random errors
+  nu <- rnorm(n = n_obs, sd = sd_y)
+  omega_psi <- rnorm(n = n_obs, sd = sd_psi)
+  omega_E <- rnorm(n = n_obs, sd = sd_E)
+
+  # First observation
+  y[1L] <- E[1L] + nu[1L]
+
+  for (t in seq_len(n_obs)[-1]) {
+    psi[t] <- psi[t - 1] + omega_psi[t]
+    E[t] <- lambda * E[t - 1] + psi[t] * x[t] + omega_E[t]
+    y[t] <- E[t] + nu[t]
+  }
+
+  # Estimate lambda by using 1st Taylor approximation
+  mod_taylor <- dlm(transfer_function = list(order = 1, xreg = x,
+                                             discount_factor = 1))
+
+  m0 <- c(0, 0, 0)
+  C0 <- diag(x = c(1, 0.5, 10), nrow = 3)
+  out <- fit(model = mod_taylor, y = y, m0 = m0, C0 = C0)
+  plot(out$filtered$m[2L, ])
+
+  # Estimate for fixed value of lambda
+  mod_fixed <- dlm(transfer_function = list(order = 1, xreg = x,
+                                            lambda = 0.7,
+                                            discount_factor = 1))
+  out_fixed <- fit(model = mod_fixed, y = y, m0 = matrix(c(0, 0), ncol = 1),
+                   C0 = diag(c(1, 10)))
+  plot(out_fixed$filtered$m[2L, ])
+  lines(out$filtered$m[3L, ], col = "blue")
+
+  # Estimate different models for fixed lambdas and evaluate the LPL
+  lambda_seq <- seq(-1, 1, l = 10)
+  list_fits <- lapply(lambda_seq, function(lbd) {
+    mod_fixed <- dlm(transfer_function = list(order = 1, xreg = x,
+                                              lambda = lbd,
+                                              discount_factor = 1))
+    fit(model = mod_fixed, y = y,
+        m0 = matrix(c(0, 0), ncol = 1),
+        C0 = diag(c(1, 10)))
+  })
+  names(list_fits) <- lambda_seq
+  sort(sapply(list_fits, logLik))
+
+})
+
+
+test_that("TF(2) model with simulated data", {
 
   # Simulate the data
   npulse <- 5
@@ -424,7 +493,7 @@ test_that("tf(2) model with simulated data", {
 
 })
 
-test_that("tf(2) + level model with simulated data", {
+test_that("TF(2) + level model with simulated data", {
 
   # Simulate the data
   npulse <- 5

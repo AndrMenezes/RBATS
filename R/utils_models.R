@@ -171,29 +171,43 @@
   list(FF = FF, GG = GG, D = D)
 }
 
-.transfer_function_model <- function(order, X, discount_factors) {
+.transfer_function_model <- function(order, X, discount_factors, lambda = NULL) {
 
+  if ((order == 1) & !is.null(lambda)) {
+    FF <- matrix(c(1, 0), ncol = 1L)
+    GG <- diag(c(lambda, 1), nrow = 2)
 
-  FF <- matrix(c(1, rep(0, 2 * order)), ncol = 1L)
+    discount_factors <- if (length(discount_factors) == 1L) rep(discount_factors, 2) else discount_factors
+    D <- diag(1/discount_factors, ncol = 2, nrow = 2)
+    D[which(D != diag(D))] <- 1
 
-  GG <- diag(1, 2 * order + 1)
-  if (order > 1L) {
-    # Pop up the second main diagonal of the matrix
-    diag(GG[1:order, 1:order]) <- 0
-    for (i in 1:(order - 1)) {
-      GG[i + 1, i] <- 1
-    }
+    # Named the components
+    comp_names <- c("E_1", "psi")
+
   }
-  # Fill with NA the first row to represent the posterior mean of past time
-  GG[1L, ] <- NA_real_
+  else {
+    FF <- matrix(c(1, rep(0, 2 * order)), ncol = 1L)
 
-  # Discount factor matrix
-  discount_factors <- if (length(discount_factors) == 1L) rep(discount_factors, 2 * order + 1) else discount_factors
-  D <- diag(1/discount_factors, ncol = 2 * order + 1, nrow = 2 * order + 1)
-  D[which(D != diag(D))] <- 1
+    GG <- diag(1, 2 * order + 1)
+    if (order > 1L) {
+      # Pop up the second main diagonal of the matrix
+      diag(GG[1:order, 1:order]) <- 0
+      for (i in 1:(order - 1)) {
+        GG[i + 1, i] <- 1
+      }
+    }
+    # Fill with NA the first row to represent the posterior mean of past time
+    GG[1L, ] <- NA_real_
 
-  # Named the components
-  comp_names <- c(paste0("E_", 1:order), paste0("lambda_", 1:order), "psi")
+    # Discount factor matrix
+    discount_factors <- if (length(discount_factors) == 1L) rep(discount_factors, 2 * order + 1) else discount_factors
+    D <- diag(1/discount_factors, ncol = 2 * order + 1, nrow = 2 * order + 1)
+    D[which(D != diag(D))] <- 1
+
+    # Named the components
+    comp_names <- c(paste0("E_", 1:order), paste0("lambda_", 1:order), "psi")
+
+  }
 
   colnames(D) <- rownames(D) <- colnames(GG) <- rownames(GG) <- rownames(FF) <- comp_names
 

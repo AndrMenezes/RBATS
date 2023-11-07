@@ -144,7 +144,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
     mod_tf <- .transfer_function_model(order = transfer_function[["order"]],
                                        X = transfer_function[["xreg"]],
                                        discount_factors = transfer_function[["discount_factor"]],
-                                       lambda = transfer_function[["discount_factor"]])
+                                       lambda = transfer_function[["lambda"]])
     np__tf <- nrow(mod_tf[["FF"]])
 
     if (!exists("mod", environment(), inherits = FALSE)) {
@@ -184,7 +184,6 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   # Fill the index of each component
   mod[["i_cycle"]] <- if (is.null(mod[["i_cycle"]])) 0 else mod[["i_cycle"]]
   mod[["i_autoregressive"]] <- if (is.null(mod[["i_autoregressive"]])) 0 else mod[["i_autoregressive"]]
-  mod[["i_transfer_function"]] <- if (is.null(mod[["i_transfer_function"]])) 0 else mod[["i_transfer_function"]]
   mod[["i_transfer_function"]] <- if (is.null(mod[["i_transfer_function"]])) 0 else mod[["i_transfer_function"]]
 
 

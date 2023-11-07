@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // forward_filter_dlm
-Rcpp::List forward_filter_dlm(arma::vec y, arma::mat F, arma::mat G, arma::mat D, arma::vec m, arma::mat C, double n, double s, double df_variance, int n_parms, int ar_order, int tf_order, Rcpp::IntegerVector i_ar, Rcpp::IntegerVector i_tf, Rcpp::NumericVector xreg_tf);
-RcppExport SEXP _RBATS_forward_filter_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP mSEXP, SEXP CSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP n_parmsSEXP, SEXP ar_orderSEXP, SEXP tf_orderSEXP, SEXP i_arSEXP, SEXP i_tfSEXP, SEXP xreg_tfSEXP) {
+Rcpp::List forward_filter_dlm(arma::vec y, arma::mat F, arma::mat G, arma::mat D, arma::vec m, arma::mat C, double n, double s, double df_variance, int n_parms, int ar_order, int tf_order, int fixed_tf_parm, Rcpp::IntegerVector i_ar, Rcpp::IntegerVector i_tf, Rcpp::NumericVector xreg_tf);
+RcppExport SEXP _RBATS_forward_filter_dlm(SEXP ySEXP, SEXP FSEXP, SEXP GSEXP, SEXP DSEXP, SEXP mSEXP, SEXP CSEXP, SEXP nSEXP, SEXP sSEXP, SEXP df_varianceSEXP, SEXP n_parmsSEXP, SEXP ar_orderSEXP, SEXP tf_orderSEXP, SEXP fixed_tf_parmSEXP, SEXP i_arSEXP, SEXP i_tfSEXP, SEXP xreg_tfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,10 +29,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_parms(n_parmsSEXP);
     Rcpp::traits::input_parameter< int >::type ar_order(ar_orderSEXP);
     Rcpp::traits::input_parameter< int >::type tf_order(tf_orderSEXP);
+    Rcpp::traits::input_parameter< int >::type fixed_tf_parm(fixed_tf_parmSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type i_ar(i_arSEXP);
     Rcpp::traits::input_parameter< Rcpp::IntegerVector >::type i_tf(i_tfSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type xreg_tf(xreg_tfSEXP);
-    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm(y, F, G, D, m, C, n, s, df_variance, n_parms, ar_order, tf_order, i_ar, i_tf, xreg_tf));
+    rcpp_result_gen = Rcpp::wrap(forward_filter_dlm(y, F, G, D, m, C, n, s, df_variance, n_parms, ar_order, tf_order, fixed_tf_parm, i_ar, i_tf, xreg_tf));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -54,7 +55,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RBATS_forward_filter_dlm", (DL_FUNC) &_RBATS_forward_filter_dlm, 15},
+    {"_RBATS_forward_filter_dlm", (DL_FUNC) &_RBATS_forward_filter_dlm, 16},
     {"_RBATS_backward_smoother_dlm", (DL_FUNC) &_RBATS_backward_smoother_dlm, 6},
     {NULL, NULL, 0}
 };

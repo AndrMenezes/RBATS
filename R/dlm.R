@@ -186,6 +186,9 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   mod[["i_autoregressive"]] <- if (is.null(mod[["i_autoregressive"]])) 0 else mod[["i_autoregressive"]]
   mod[["i_transfer_function"]] <- if (is.null(mod[["i_transfer_function"]])) 0 else mod[["i_transfer_function"]]
 
+  # Indication if should estimate the lambda's in the TF component
+  mod[["fixed_tf_parm"]] <- if (is.null(transfer_function[["lambda"]])) 0 else 1
+
 
   mod[["parameters_names"]] <- comp_names
   mod[["n_parms"]] <- length(comp_names) - np__ar - np__tf

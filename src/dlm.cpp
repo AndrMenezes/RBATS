@@ -7,6 +7,7 @@ void evolve_prior(arma::vec &a, arma::mat &R,
                   int &n_parms,
                   int &ar_order,
                   int &tf_order,
+                  int &fixed_tf_parm,
                   Rcpp::IntegerVector &i_ar,
                   Rcpp::IntegerVector &i_tf,
                   double &x_tf) {
@@ -42,8 +43,18 @@ void evolve_prior(arma::vec &a, arma::mat &R,
   }
 
   // Evolution for the transfer function components
-  if (tf_order > 0) {
-    // First component of AR ( sum_{i=1}^p lambda_{i} E_i + psi * x)
+
+  // Fixed lambda only for TF(1)
+  if ((fixed_tf_parm == 1) & (tf_order == 1)) {
+    // E_{t} = lambda * E_{t-1} + x_t * gamma_t
+    a(i_tf(0)) = G(i_tf(0), i_tf(0)) * m(i_tf(0)) + m(i_tf(1)) * x_tf;
+    a(i_tf(1)) = m(i_tf(1));
+    G(i_tf(0), i_tf(1)) = x_tf;
+  }
+
+  if ( (tf_order > 0) & (fixed_tf_parm == 0) ) {
+
+    // First component of TF ( sum_{i=1}^p lambda_{i} E_i + psi * x)
     a.subvec(i_tf(0), i_tf(0)) = (
       m.subvec(i_tf(0), i_tf(tf_order - 1)).t()
     * m.subvec(i_tf(tf_order), i_tf(2 * tf_order - 1))
@@ -136,6 +147,7 @@ Rcpp::List forward_filter_dlm(arma::vec y,
                               int n_parms,
                               int ar_order,
                               int tf_order,
+                              int fixed_tf_parm,
                               Rcpp::IntegerVector i_ar,
                               Rcpp::IntegerVector i_tf,
                               Rcpp::NumericVector xreg_tf){
@@ -168,6 +180,7 @@ Rcpp::List forward_filter_dlm(arma::vec y,
                  s, n_parms,
                  ar_order,
                  tf_order,
+                 fixed_tf_parm,
                  i_ar,
                  i_tf,
                  x_tf);

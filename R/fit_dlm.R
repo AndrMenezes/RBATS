@@ -105,10 +105,10 @@ forward_filter.dlm <- function(model, y, m0, C0, n = 1, s = 1, ...) {
                             n_parms = model[["n_parms"]],
                             ar_order = model[["ar_order"]],
                             tf_order = model[["tf_order"]],
+                            fixed_tf_parm = model[["fixed_tf_parm"]],
                             i_ar = model[["i_autoregressive"]] - 1L,
                             i_tf = model[["i_transfer_function"]] - 1L,
-                            xreg_tf = model[["xreg_tf"]]
-                            )
+                            xreg_tf = model[["xreg_tf"]])
 
   structure(out, class = "dlm.forward_filter")
 }

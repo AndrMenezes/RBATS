@@ -27,7 +27,8 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                 regressor = list(xreg = NULL, discount_factor = 0.99),
                 autoregressive = list(order = NULL, discount_factor = 0.998),
                 cycle = list(frequency = NULL, rho = NULL, discount_factor = 0.998),
-                transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
+                transfer_function = list(order = NULL, xreg = NULL, lambda = NULL,
+                                         discount_factor = 0.998),
                 df_variance = 1,
                 variance_law = list(type = "identity", power = 1)) {
 
@@ -114,9 +115,11 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   }
 
   # Create autoregressive components
+  np__ar <- 0L
   if (!is.null(autoregressive[["order"]])) {
     mod_autoreg <- .autoregressive_model(order = autoregressive[["order"]],
                                          discount_factors = autoregressive[["discount_factor"]])
+    np__ar <- nrow(mod_autoreg[["FF"]])
 
     if (missing(polynomial) & missing(regressor)) {
       mod <- mod_autoreg
@@ -136,10 +139,13 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
   }
 
   # Create transfer function component
+  np__tf <- 0
   if (!is.null(transfer_function[["order"]])) {
     mod_tf <- .transfer_function_model(order = transfer_function[["order"]],
                                        X = transfer_function[["xreg"]],
-                                       discount_factors = transfer_function[["discount_factor"]])
+                                       discount_factors = transfer_function[["discount_factor"]],
+                                       lambda = transfer_function[["discount_factor"]])
+    np__tf <- nrow(mod_tf[["FF"]])
 
     if (!exists("mod", environment(), inherits = FALSE)) {
       mod <- mod_tf
@@ -183,7 +189,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
 
 
   mod[["parameters_names"]] <- comp_names
-  mod[["n_parms"]] <- length(comp_names) - 2*mod[["ar_order"]] - 2*mod[["tf_order"]]
+  mod[["n_parms"]] <- length(comp_names) - np__ar - np__tf
   mod[["loglik"]] <- 0
   mod[["time"]] <- 0L
   mod[["call"]] <- match.call()

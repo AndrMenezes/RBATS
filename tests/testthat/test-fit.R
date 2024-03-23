@@ -374,7 +374,6 @@ test_that("level + regression + ar(2)", {
 test_that("TF(1) for simulated data", {
 
 
-  devtools::load_all()
   n_obs <- 100
   sd_y <- 1
   sd_E <- 0.02
@@ -537,9 +536,9 @@ test_that("TF(2) + level model with simulated data", {
     y[t] <- mu[t] + E1[t] + nu[t]
   }
 
-  mod <- dlm(polynomial = list(order = 1, discount_factor = 0.95),
+  mod <- dlm(polynomial = list(order = 1, discount_factor = 1),
              transfer_function = list(order = 2, xreg = x,
-                                      discount_factor = 0.998))
+                                      discount_factor = 1))
   m <- c(1, 0, 0, 0, 0, 0)
   C <- diag(x = c(100, 10, 0.001, 5, 5, 1), nrow = 6)
   out <- fit(model = mod, y = y, m0 = m, C0 = C)

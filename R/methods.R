@@ -118,21 +118,3 @@ logLik.dlm <- function(object, ...) {
 logLik.dlm.fit <- function(object, ...) {
   logLik(object[["model"]])
 }
-
-#' @rdname s3methods
-#' @export
-logLik.dgegm <- function(object, ...) {
-  if (!missing(...))
-    warning("Extra arguments discarded")
-  ll <- object$loglik
-  attr(ll, "df") <- length(object$parameters_names)
-  attr(ll, "nobs") <- object$time
-  class(ll) <- "logLik"
-  ll
-}
-
-#' @rdname s3methods
-#' @export
-logLik.dgegm.fit <- function(object, ...) {
-  logLik(object[["model"]])
-}

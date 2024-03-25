@@ -495,8 +495,8 @@ test_that("TF(2) model with simulated data", {
 test_that("TF(2) + level model with simulated data", {
 
   # Simulate the data
-  npulse <- 5
-  nobs <- 50
+  nobs <- 1000
+  npulse <- 0.25 * nobs
   sd_y <- 1
   sd_mu <- 0.05
   sd_E1 <- 0.0004
@@ -517,6 +517,7 @@ test_that("TF(2) + level model with simulated data", {
   x <- numeric(nobs) # rpois(nobs, lambda = 1)
   impulse <- seq(1, nobs, by = nobs / npulse)
   x[impulse] <- 1
+  prop.table(table(x))
 
   # Random errors
   set.seed(1111)
@@ -539,11 +540,65 @@ test_that("TF(2) + level model with simulated data", {
   mod <- dlm(polynomial = list(order = 1, discount_factor = 1),
              transfer_function = list(order = 2, xreg = x,
                                       discount_factor = 1))
-  m <- c(1, 0, 0, 0, 0, 0)
-  C <- diag(x = c(100, 10, 0.001, 5, 5, 1), nrow = 6)
-  out <- fit(model = mod, y = y, m0 = m, C0 = C)
+  p <- nrow(mod$FF)
+  or_tf <- 2L
+  prior_m0 <- matrix(data = c(mean(mu), rep(0, p - 1L)))
+  prior1_C0 <- diag(x = c(rep(10, 1L),
+                          9, 0.001, # E_i
+                          rep(0.5, or_tf), # lambda_i
+                          10))
+  prior10_C0 <- diag(x = c(rep(10, 1L),
+                           9, 0.001, # E_i
+                           rep(10, or_tf), # lambda_i
+                           10))
+  fit1 <- fit(model = mod, y = y, m0 = prior_m0, C0 = prior1_C0)
+  fit10 <- fit(model = mod, y = y, m0 = prior_m0, C0 = prior10_C0)
+
   # out
-  expect_s3_class(out, "dlm.fit")
+  # expect_s3_class(fit1, "dlm.fit")
+
+  # x11()
+  # plot(mu)
+  # plot(fit1$filtered$m[1L, ], col = 4)
+  # lines(fit10$filtered$m[1L, ], col = 2)
+
+  # x11()
+  # plot(fit1$filtered$m[4L, ], col = 4, type = "l", ylim = c(-1.5, 1.5))
+  # lines(fit10$filtered$m[4L, ], col = 2)
+  # abline(h = true_lambda_1)
+
+  # x11()
+  # plot(fit1$filtered$m[5L, ], col = 4, type = "l", ylim = c(-1.5, 1))
+  # lines(fit10$filtered$m[5L, ], col = 2)
+  # abline(h = true_lambda_2)
+
+  d1 <- extract(fit1, component = "state")
+  d10 <- extract(fit10, component = "state")
+
+  # dplot <- d1 |>
+  #   dplyr::filter(parameter %in% c("lambda_1", "lambda_2")) |>
+  #   dplyr::mutate(prior = "N[0, 1]") |>
+  #   dplyr::bind_rows(
+  #     d10 |>
+  #       dplyr::filter(parameter %in% c("lambda_1", "lambda_2")) |>
+  #       dplyr::mutate(prior = "N[0, 10]")
+  #   ) |>
+  #   dplyr::as_tibble() |>
+  #   dplyr::mutate(true = ifelse(parameter == "lambda_1",
+  #                               true_lambda_1,
+  #                               true_lambda_2))
+  # library(ggplot2)
+  # data_pulses <- data.frame(t = impulse)
+  # p <- ggplot(data = dplyr::filter(dplot, t > 10),
+  #             aes(x = t, y = mean)) +
+  #   facet_wrap(~parameter, ncol = 1, scales = "free_y") +
+  #   geom_line(aes(col = prior)) +
+  #   geom_hline(aes(yintercept = true)) +
+  #   geom_ribbon(aes(ymin = ci_lower__95, ymax = ci_upper__95, fill = prior),
+  #               alpha = 0.4) +
+  #   geom_rug(data = dplyr::filter(data_pulses, t > 5),
+  #            mapping =  aes(x = t, y = NA_real_))
+  # p
 
 
   # plot(y)

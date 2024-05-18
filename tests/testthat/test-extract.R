@@ -1,5 +1,5 @@
 test_that("extract method for dlm objects", {
-  devtools::load_all()
+  # devtools::load_all()
 
   y <- c(AirPassengers)
   m <- dlm(polynomial = list(order = 2, discount_factor = 0.95),

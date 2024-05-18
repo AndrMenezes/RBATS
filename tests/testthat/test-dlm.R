@@ -101,9 +101,9 @@ test_that("dlm with transfer function", {
                              discount_factor = 0.998)
   )
 
-  expect_equal(m$n_parms , 0L)
-  expect_equal(m$tf_order , 2)
-  expect_equal(m$i_transfer_function , 1:5)
+  expect_equal(m$n_parms, 0L)
+  expect_equal(m$tf_order, 2)
+  expect_equal(m$i_transfer_function, 1:5)
   expect_equal(unname(m$FF), matrix(c(1, rep(0, 4)), ncol = 1))
   expect_equal(unname(m$GG),
                matrix(c(rep(NA, 5),
@@ -167,4 +167,3 @@ test_that("dlm with cycle",{
   expect_equal(m2$i_cycle, 3:4)
 
 })
-

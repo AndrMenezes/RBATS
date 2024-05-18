@@ -1,7 +1,8 @@
 Package: RBATS
 Title: Bayesian Dynamic Models for univariate time series
 Version: 0.2.0
-Author: André F. B. Menezes
+Authors@R: c(person(given = "André F. B.", family = "Menezes", role = c("aut", "cre"), email = "andrefelipemaringa@gmail.com", comment = c(ORCID = "0000-0002-3320-9834")),
+    person(given = "Eduardo G.", family = "Pinheiro", role = c("aut"), comment = c(ORCID = "0000-0002-0053-717X")))
 Maintainer: André F. B. Menezes <andrefelipemaringa@gmail.com>
 Description: A lightweight implementation in `C++` of univariate Bayesian Dynamic Models based on the West and Harrison (1997).
 License: MIT + file LICENSE

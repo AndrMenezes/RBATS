@@ -41,8 +41,7 @@ For both parameter the default is 1.}
 }
 \description{
 Methods \code{forward_filter} and \code{backward_smoother}
-for objects of class \code{dlm}. The implementation is written in
-\code{C++}.
+for objects of class \code{dlm}. The implementation is in \code{C++}.
 }
 \references{
 West, M.; Harrison, J. Bayesian Forecasting and Dynamic Models. Springer, 1997.

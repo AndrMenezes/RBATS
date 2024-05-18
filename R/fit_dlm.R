@@ -1,8 +1,7 @@
 #' @title Forward filtering and Backward Smoothing for Bayesian Dynamic Linear Models
 #'
 #' @description Methods \code{forward_filter} and \code{backward_smoother}
-#' for objects of class \code{dlm}. The implementation is written in
-#' \code{C++}.
+#' for objects of class \code{dlm}. The implementation is in \code{C++}.
 #'
 #' @param model a model object of class \code{dlm}.
 #' @param y vector. Observed value of time series.

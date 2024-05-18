@@ -8,10 +8,7 @@
 #' @param autoregressive list. Components to specify a dynamic autoregressive model.
 #' @param cycle list. Components to specify a dynamic cycle model.
 #' @param transfer_function list. Components to specify a dynamic transfer function model.
-#' @param df_variance numeric. Discount factor for observation variance. Use a beta-gamma random walk.
-#' @param variance_law list. Variance law \code{type} and \code{power} parameter.
-#' The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
-#' and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.
+#' @param df_variance numeric. Discount factor for observational variance. It uses a beta-gamma random walk.
 #'
 #' @author André F. B. Menezes
 #'
@@ -29,8 +26,7 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
                 cycle = list(frequency = NULL, rho = NULL, discount_factor = 0.998),
                 transfer_function = list(order = NULL, xreg = NULL, lambda = NULL,
                                          discount_factor = 0.998),
-                df_variance = 1,
-                variance_law = list(type = "identity", power = 1)) {
+                df_variance = 1) {
 
   if (missing(polynomial) & missing(seasonal) & missing(regressor) &
       missing(autoregressive) & missing(cycle) & missing(transfer_function)) {
@@ -171,7 +167,6 @@ dlm <- function(polynomial = list(order = 1L, discount_factor = 0.95),
 
   # Discount factor and law for the observational variance
   mod[["df_variance"]] <- df_variance
-  mod[["variance_law"]] <- variance_law
 
   # Additional information
   mod[["polynomial_order"]] <- if (missing(polynomial)) NULL else polynomial[["order"]]

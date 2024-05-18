@@ -10,9 +10,10 @@ dlm(
     discount_factor = 0.98),
   regressor = list(xreg = NULL, discount_factor = 0.99),
   autoregressive = list(order = NULL, discount_factor = 0.998),
-  transfer_function = list(order = NULL, xreg = NULL, discount_factor = 0.998),
-  df_variance = 1,
-  variance_law = list(type = "identity", power = 1)
+  cycle = list(frequency = NULL, rho = NULL, discount_factor = 0.998),
+  transfer_function = list(order = NULL, xreg = NULL, lambda = NULL, discount_factor =
+    0.998),
+  df_variance = 1
 )
 }
 \arguments{
@@ -24,13 +25,11 @@ dlm(
 
 \item{autoregressive}{list. Components to specify a dynamic autoregressive model.}
 
+\item{cycle}{list. Components to specify a dynamic cycle model.}
+
 \item{transfer_function}{list. Components to specify a dynamic transfer function model.}
 
-\item{df_variance}{numeric. Discount factor for observation variance. Use a beta-gamma random walk.}
-
-\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
-The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
-and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
+\item{df_variance}{numeric. Discount factor for observational variance. It uses a beta-gamma random walk.}
 }
 \description{
 Create object of class \code{dlm}.

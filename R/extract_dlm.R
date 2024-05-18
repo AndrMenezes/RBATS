@@ -14,6 +14,8 @@
 #' @param component character. The options are \code{state} or \code{response}.
 #' @param ... currently not used.
 
+#' @importFrom stats qt
+
 #' @rdname extract.dlm.fit
 #' @export
 extract <- function(x, ...) {
@@ -83,4 +85,3 @@ extract.dlm.fit <- function(x, prob_interval = c(0.05, 0.20),
 
   data_out
 }
-

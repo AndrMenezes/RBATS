@@ -278,4 +278,3 @@ Rcpp::List backward_smoother_dlm(arma::mat F,
       Rcpp::Named("qk")=qk_seq));
 
 }
-

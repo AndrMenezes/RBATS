@@ -10,7 +10,8 @@ maintaining Bayesian sequential inference while keeping a lightweight structure
 with fewer dependencies.
 
 In the current version, I translated the main functions,
-`forward_filter_dlm` and `backward_smoother_dlm`, to `C++` using the
+[`forward_filter_dlm`](https://github.com/AndrMenezes/RBATS/blob/master/src/dlm.cpp#L138)
+and [`backward_smoother_dlm`](https://github.com/AndrMenezes/RBATS/blob/master/src/dlm.cpp#L227), to `C++` using the
 `Rcpp` and `RcppArmadillo` interfaces.
 
 You can install the development version from GitHub with:

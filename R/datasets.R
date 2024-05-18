@@ -1,3 +1,32 @@
+#' @name cp6
+#' @title Monthly total sales of tobacco from a company in UK.
+#' @description Monthly total sales, in monetary terms on a standard scale, of
+#' tobacco and related products marketed by a major company in the UK.
+#' The time of the data runs from January 1955 to December 1959 inclusive.
+#' @format A \code{\link{data.frame}} with 60 observations and 2 columns.
+#' @author André Felipe Menezes
+#' @usage data(cp6, package = "RBATS")
+#' @source XXXX.
+"cp6"
+
+#' @name telephone_calls
+#' @title Telephone calls
+#' @description Telephone calls
+#' @format A \code{\link{data.frame}} with RR observations and CC columns.
+#' @author André Felipe Menezes
+#' @usage data(telephone_calls, package = "RBATS")
+#' @source XXXX.
+"telephone_calls"
+
+#' @name market_share
+#' @title Market share
+#' @description Market share
+#' @format A \code{\link{data.frame}} with RR observations and CC columns.
+#' @author André Felipe Menezes
+#' @usage data(market_share, package = "RBATS")
+#' @source XXXX.
+"market_share"
+
 #' @name us_retail_employment
 #' @title US monthly retail employment
 #' @description Data extract from \code{us_employment} of \pkg{fpp3} package.

@@ -5,28 +5,31 @@
 \title{Bayesian Dynamic Linear Model}
 \usage{
 dlm(
-  polynomial_order = 1L,
-  seasonal = list(type = c("none", "free", "fourier"), period = NULL, harmonics = NULL),
-  xreg = NULL,
-  discount_factors = list(polynomial = 0.95, seasonal = 0.98, regressors = 0.99),
-  df_variance = 1,
-  variance_law = list(type = "identity", power = 2)
+  polynomial = list(order = 1L, discount_factor = 0.95),
+  seasonal = list(type = c("none", "free", "fourier"), period = NULL, harmonics = NULL,
+    discount_factor = 0.98),
+  regressor = list(xreg = NULL, discount_factor = 0.99),
+  autoregressive = list(order = NULL, discount_factor = 0.998),
+  cycle = list(frequency = NULL, rho = NULL, discount_factor = 0.998),
+  transfer_function = list(order = NULL, xreg = NULL, lambda = NULL, discount_factor =
+    0.998),
+  df_variance = 1
 )
 }
 \arguments{
-\item{polynomial_order}{integer. Order of polynomial model.}
+\item{polynomial}{list. Order of polynomial model.}
 
-\item{seasonal}{list. Components to specify seasonal components.}
+\item{seasonal}{list. Components to specify seasonal model.}
 
-\item{xreg}{matrix. Regressors.}
+\item{regressor}{list. Components to specify a dynamic regression model.}
 
-\item{discount_factors}{list. Discount factors for each model components.}
+\item{autoregressive}{list. Components to specify a dynamic autoregressive model.}
 
-\item{df_variance}{numeric. Discount factor for observation variance. Use a beta-gamma random walk.}
+\item{cycle}{list. Components to specify a dynamic cycle model.}
 
-\item{variance_law}{list. Variance law \code{type} and \code{power} parameter.
-The variance law \code{type} are \code{identity}, \code{poisson}, \code{binomial},
-and \code{power}. The variance law \code{power} should be numeric \eqn{p \geq 1}.}
+\item{transfer_function}{list. Components to specify a dynamic transfer function model.}
+
+\item{df_variance}{numeric. Discount factor for observational variance. It uses a beta-gamma random walk.}
 }
 \description{
 Create object of class \code{dlm}.

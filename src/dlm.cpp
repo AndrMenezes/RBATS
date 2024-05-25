@@ -255,6 +255,8 @@ Rcpp::List backward_smoother_dlm(arma::mat F,
 
     // Using {inv_sympd} because is faster than {inv} and R is a covariance matrix (usually p.d.)
 
+    // TODO: need to try-catch errors due to numerical issues in matrix-inverse
+
     // B_{t-k}
     B_t_k = C_seq.slice(T_end - k - 1) * G_seq.slice(T_end-k).t() *
       arma::inv_sympd(R_seq.slice(T_end-k), arma::inv_opts::allow_approx);
@@ -278,3 +280,76 @@ Rcpp::List backward_smoother_dlm(arma::mat F,
       Rcpp::Named("qk")=qk_seq));
 
 }
+
+// [[Rcpp::export]]
+Rcpp::List forecast_dlm(int horizon,
+                  arma::mat F,
+                  arma::mat G,
+                  arma::mat D,
+                  arma::vec m,
+                  arma::mat C,
+                  double s,
+                  int n_parms,
+                  int ar_order,
+                  int tf_order,
+                  int fixed_tf_parm,
+                  Rcpp::IntegerVector i_ar,
+                  Rcpp::IntegerVector i_tf,
+                  Rcpp::NumericVector xreg_tf) {
+
+  // Initialize empty objects to save the parameters
+  arma::cube R_seq(C.n_rows, C.n_cols, horizon, arma::fill::zeros);
+  arma::cube G_seq(C.n_rows, C.n_cols, horizon, arma::fill::zeros);
+  arma::mat a_seq(m.size(), horizon, arma::fill::zeros);
+  arma::vec f_seq(horizon, arma::fill::zeros);
+  arma::vec q_seq(horizon, arma::fill::zeros);
+
+
+  arma::vec a = m;
+  arma::mat R = C;
+  arma::vec F_t;
+  double f = 0, q = 1, x_tf = 0;
+
+  for (int h = 0; h < horizon; h++) {
+    x_tf = xreg_tf(h);
+
+    // Posterior at time t to prior for time t+h
+    evolve_prior(a, R,
+                 m, C,
+                 G, D,
+                 s, n_parms,
+                 ar_order,
+                 tf_order,
+                 fixed_tf_parm,
+                 i_ar,
+                 i_tf,
+                 x_tf);
+
+    F_t = F.col(h);
+
+    // y_{t+h} | D_{t}
+    forecast_marginal(f, q,
+                      F_t,
+                      a, R, s,
+                      ar_order);
+
+    // Saving the parameters
+    f_seq(h) = f;
+    q_seq(h) = q;
+    G_seq.slice(h) = G;
+    a_seq.col(h) = a;
+    R_seq.slice(h) = R;
+
+    // Update the posterior-moments to the prior to go for next time horizon
+    m = a;
+    C = R;
+  }
+
+  return(Rcpp::List::create(
+      Rcpp::Named("a")=a_seq,
+      Rcpp::Named("R")=R_seq,
+      Rcpp::Named("G")=G_seq,
+      Rcpp::Named("f")=f_seq,
+      Rcpp::Named("q")=q_seq));
+}
+

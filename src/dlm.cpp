@@ -299,7 +299,6 @@ Rcpp::List forecast_dlm(int horizon,
 
   // Initialize empty objects to save the parameters
   arma::cube R_seq(C.n_rows, C.n_cols, horizon, arma::fill::zeros);
-  arma::cube G_seq(C.n_rows, C.n_cols, horizon, arma::fill::zeros);
   arma::mat a_seq(m.size(), horizon, arma::fill::zeros);
   arma::vec f_seq(horizon, arma::fill::zeros);
   arma::vec q_seq(horizon, arma::fill::zeros);
@@ -336,7 +335,6 @@ Rcpp::List forecast_dlm(int horizon,
     // Saving the parameters
     f_seq(h) = f;
     q_seq(h) = q;
-    G_seq.slice(h) = G;
     a_seq.col(h) = a;
     R_seq.slice(h) = R;
 
@@ -348,7 +346,6 @@ Rcpp::List forecast_dlm(int horizon,
   return(Rcpp::List::create(
       Rcpp::Named("a")=a_seq,
       Rcpp::Named("R")=R_seq,
-      Rcpp::Named("G")=G_seq,
       Rcpp::Named("f")=f_seq,
       Rcpp::Named("q")=q_seq));
 }

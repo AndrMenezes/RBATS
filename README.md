@@ -29,7 +29,7 @@ python package by
 
 ## Version Information
 
-- v0.2.0: Translated the main code to `C++` and included new non-linear DLM models.
+- v0.2.1: Translated the main code to `C++`, included new non-linear DLM models and a `forecast` method for `dlm.fit` objects.
 
 - v0.1.0: First release version written in `R` and used in [Migon et al. (2023)](https://onlinelibrary.wiley.com/doi/10.1002/asmb.2756).
 

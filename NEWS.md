@@ -1,3 +1,7 @@
+# `RBATS` 0.2.1
+- Included `forecast` method for `dlm.fit` objects.
+- Added some unit-test to validate the `forecast` method.
+
 # `RBATS` 0.2.0
 
 - Filter and smooth operations written in C++.
